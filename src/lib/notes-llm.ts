@@ -37,6 +37,7 @@ export function getNoteMarkdown(page: NotesPage): string {
       canonicalUrl,
       author: site.fullName,
       date: page.data.publishedAt?.toISOString().slice(0, 10),
+      updatedDate: page.data.updatedAt?.toISOString().slice(0, 10),
       attribution: false,
     });
   } catch (error) {

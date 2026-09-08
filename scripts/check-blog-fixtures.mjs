@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import assert from "node:assert/strict";
 import { constants } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -48,6 +49,9 @@ try {
   const astroPackage = JSON.parse(await readFile(join(fixtureRoot, "node_modules/astro/package.json"), "utf8"));
   run(join("node_modules/astro", astroPackage.bin.astro), ["build"]);
   run("scripts/apply-security-headers.mjs");
+  for (const output of ["blog/qa-blog-reader.md", "llms-full.txt"]) {
+    assert.match(await readFile(join(fixtureRoot, "dist", output), "utf8"), /Published: 2000-01-02\n\nUpdated: 2000-01-03\n/);
+  }
   run("scripts/check-accessibility.mjs", [
     "--routes",
     "/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/",

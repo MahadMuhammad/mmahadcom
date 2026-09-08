@@ -49,6 +49,8 @@ assert.match(output, /\[this section\]\(https:\/\/www.mmahad.com\/blog\/export-f
 assert.match(output, /View interactive example on the website/);
 assert.doesNotMatch(output, /client:load|<Callout>/);
 assert.match(output, /Written by Muhammad Mahad · \[Original article\].*\n$/);
+assert.doesNotMatch(output, /Updated:/);
+assert.match(createBlogMarkdown({ ...post, updatedDate: "2026-09-08" }), /Published: 2026-09-05\n\nUpdated: 2026-09-08\n/);
 assert.doesNotMatch(createBlogMarkdown({ ...post, attribution: false }), /Written by|Original article/);
 assert.throws(() => createBlogMarkdown({ ...post, body: "The answer is {answer}." }), /computed MDX text/);
 console.log("Blog Markdown passed: code, tables, links, MDX fallback, attribution, and computed-prose guard.");
