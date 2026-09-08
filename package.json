@@ -30,11 +30,11 @@
     "check:blog-markdown": "node scripts/check-blog-markdown.mjs"
   },
   "dependencies": {
-    "@astrojs/markdown-remark": "7.2.4",
-    "@astrojs/mdx": "^7.0.8",
+    "@astrojs/markdown-remark": "7.3.0",
+    "@astrojs/mdx": "^8.0.0",
     "@astrojs/react": "^6.0.4",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.2.9",
+    "astro": "^7.2.10",
     "fumadocs-core": "^16.15.4",
     "fumadocs-ui": "^16.15.4",
     "react": "^19.2.8",
