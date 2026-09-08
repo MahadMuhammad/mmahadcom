@@ -1,6 +1,6 @@
 # mmahad.com
 
-Muhammad Mahad's personal website, built as a static Astro portfolio with a standalone Blog using Fumadocs reading components and a separate Fumadocs Notes section.
+Source for [mmahad.com](https://www.mmahad.com): Muhammad Mahad's personal website, built as a static Astro portfolio with a standalone Blog using Fumadocs reading components and a separate Fumadocs Notes section. The canonical repository is [MahadMuhammad/mmahadcom](https://github.com/MahadMuhammad/mmahadcom).
 
 ## Architecture
 
