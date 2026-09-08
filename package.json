@@ -30,7 +30,7 @@
     "check:blog-markdown": "node scripts/check-blog-markdown.mjs"
   },
   "dependencies": {
-    "@astrojs/mdx": "^7.0.8",
+    "@astrojs/mdx": "^8.0.0",
     "@astrojs/react": "^6.0.4",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.2.9",
