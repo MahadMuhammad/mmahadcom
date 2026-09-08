@@ -6,7 +6,6 @@ import sharp from "sharp";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = path.join(projectRoot, "dist");
-const publicDirectory = path.join(projectRoot, "public");
 assert.ok(!(await readdir(outputDirectory)).includes("drafts"), "Development draft previews must never appear in production dist.");
 const siteOrigin = "https://www.mmahad.com";
 const sourceRepository = JSON.parse(await readFile(new URL("../src/data/source-repository.json", import.meta.url), "utf8"));
@@ -35,8 +34,8 @@ async function assertOpenGraphMetadata(relativePath, expectedImage) {
   const imageUrl = new URL(image);
   assert.equal(imageUrl.origin, siteOrigin, `${label} uses an OG image outside the canonical site.`);
 
-  const assetPath = path.resolve(publicDirectory, `.${decodeURIComponent(imageUrl.pathname)}`);
-  const assetRelativePath = path.relative(publicDirectory, assetPath);
+  const assetPath = path.resolve(outputDirectory, `.${decodeURIComponent(imageUrl.pathname)}`);
+  const assetRelativePath = path.relative(outputDirectory, assetPath);
   assert.ok(
     assetRelativePath && !assetRelativePath.startsWith(`..${path.sep}`) && !path.isAbsolute(assetRelativePath),
     `${label} has an unsafe OG image path.`
@@ -116,7 +115,7 @@ function assertPngHasNoPrivateMetadata(buffer, label) {
 }
 
 async function assertPublicImagesHaveNoPrivateMetadata() {
-  const imagePaths = await listFiles(publicDirectory);
+  const imagePaths = (await listFiles(outputDirectory)).filter((file) => rasterImageExtensions.has(path.extname(file).toLowerCase()));
 
   for (const imagePath of imagePaths) {
     const extension = path.extname(imagePath).toLowerCase();
@@ -134,7 +133,7 @@ async function assertPublicImagesHaveNoPrivateMetadata() {
   }
 }
 
-const defaultImage = "https://www.mmahad.com/images/mahad-profile-960.jpg";
+const defaultImage = "https://www.mmahad.com/images/mahad-profile.jpg";
 
 for (const relativePath of [
   "404.html",

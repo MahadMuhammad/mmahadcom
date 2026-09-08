@@ -14,8 +14,6 @@ hero:
   src: /workshops/hacktoberfest-lahore-2025/whole-group-picture.jpg
   alt: A large group of Hacktoberfest participants pose beneath the event screen at Lahore Garrison University.
   caption: Group photo from Hacktoberfest Lahore 2025
-  width: 1920
-  height: 1280
 links:
   - label: Event Details (CNCF)
     url: https://ocgroups.dev/cncf/group/sxcyqt9/event/6s9j4j6

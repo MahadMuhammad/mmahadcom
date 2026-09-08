@@ -43,6 +43,8 @@ const imageUrl = image?.toString();
 {imageUrl && <meta name="twitter:image" content={imageUrl} />}
 {imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}
 <link rel="icon" type="image/svg+xml" href={site.favicon} />
+<link rel="alternate" type="application/rss+xml" title="Blog RSS" href={new URL("/blog/rss.xml", site.url)} />
+<link rel="alternate" type="application/rss+xml" title="Notes RSS" href={new URL("/notes/rss.xml", site.url)} />
 {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 {markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} title={`${title} as Markdown`} />}
 {llmsUrl && <link rel="alternate" type="text/plain" href={llmsUrl} title="LLM content index" />}

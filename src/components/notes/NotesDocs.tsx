@@ -113,6 +113,7 @@ export function NotesDocs({
             <a href="/notes/" aria-current="page">
               Notes
             </a>
+            <a href="/notes/rss.xml">RSS</a>
           </nav>
           <header className="notes-page-header">
             <div className="notes-page-heading">

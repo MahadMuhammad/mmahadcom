@@ -16,8 +16,6 @@ hero:
   alt: Attendees and organizers gather for a group photo in the lecture hall
   title: The Open Source Connect Pakistan community gathered in the lecture hall
   caption: Open Source Connect Pakistan 2026 community at Systems Limited, Lahore
-  width: 1920
-  height: 1440
 links:
   - label: Official Event Page
     url: https://ocgroups.dev/cncf/group/sxcyqt9/event/u5t3fkn

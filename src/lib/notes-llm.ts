@@ -9,12 +9,12 @@ import { withTrailingSlash } from "./url-paths";
 export type NotesPage = ReturnType<typeof notesSource.getPages>[number];
 
 export const llmTextHeaders = {
-  "Cache-Control": "public, max-age=3600",
+  "Cache-Control": "public, max-age=0, must-revalidate",
   "Content-Type": "text/plain; charset=utf-8",
 } as const;
 
 export const markdownHeaders = {
-  "Cache-Control": "public, max-age=3600",
+  "Cache-Control": "public, max-age=0, must-revalidate",
   "Content-Type": "text/markdown; charset=utf-8",
 } as const;
 

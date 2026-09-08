@@ -24,7 +24,6 @@
     "check:links": "node scripts/check-links.mjs",
     "format": "prettier --write \"src/**/*.{astro,ts,tsx,css,md,mdx}\" \"scripts/**/*.{js,mjs}\" \".github/workflows/*.{yml,yaml}\" astro.config.mjs tsconfig.json package.json .prettierrc README.md",
     "format:check": "prettier --check \"src/**/*.{astro,ts,tsx,css,md,mdx}\" \"scripts/**/*.{js,mjs}\" \".github/workflows/*.{yml,yaml}\" astro.config.mjs tsconfig.json package.json .prettierrc README.md",
-    "images:workshop": "node scripts/optimize-workshop-images.mjs",
     "preview": "astro preview",
     "verify": "npm run check && npm run check:blog-markdown && npm run check:notes-anchors && npm run check:html-examples && npm run build",
     "check:blog-markdown": "node scripts/check-blog-markdown.mjs"

@@ -1,4 +1,5 @@
 ---
+import ResponsiveImage from "../components/ResponsiveImage.astro";
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import BilingualText from "../components/BilingualText.astro";
@@ -36,14 +37,6 @@ const workshopCards = [
     })),
   ...legacyWorkshops.map((workshop) => ({ ...workshop, hero: undefined })),
 ];
-
-const responsiveSrcset = (src: string) => {
-  const match = src.match(/^(.*)(\.[^.]+)$/);
-  if (!match) return src;
-
-  const [, path, extension] = match;
-  return `${path}-640${extension} 640w, ${path}-1280${extension} 1280w, ${src} 1920w`;
-};
 
 const workshopImageSizes = "(max-width: 45rem) calc(100vw - 3.6rem), (max-width: 60.5rem) calc((100vw - 8rem) / 2), 26rem";
 const communityPhoto = workshopContentBySlug.get("open-source-connect-pakistan-2026")?.hero;
@@ -114,14 +107,11 @@ const communityPhotoSizes = "(max-width: 45rem) calc(100vw - 1.5rem), (max-width
           <article class="surface-card workshop-card">
             {workshop.hero && (
               <div class="workshop-card__media">
-                <img
+                <ResponsiveImage
                   src={workshop.hero.src}
-                  srcset={responsiveSrcset(workshop.hero.src)}
                   sizes={workshopImageSizes}
                   alt={workshop.hero.alt}
                   title={workshop.hero.title}
-                  width={workshop.hero.width}
-                  height={workshop.hero.height}
                   loading="lazy"
                   decoding="async"
                 />
@@ -141,14 +131,11 @@ const communityPhotoSizes = "(max-width: 45rem) calc(100vw - 1.5rem), (max-width
   {
     communityPhoto && (
       <figure class="community-photo">
-        <img
+        <ResponsiveImage
           src={communityPhoto.src}
-          srcset={responsiveSrcset(communityPhoto.src)}
           sizes={communityPhotoSizes}
           alt={communityPhoto.alt}
           title={communityPhoto.title}
-          width={communityPhoto.width}
-          height={communityPhoto.height}
           loading="lazy"
           decoding="async"
         />

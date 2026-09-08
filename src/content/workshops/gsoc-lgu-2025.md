@@ -12,8 +12,6 @@ hero:
   src: /workshops/gsoc-lgu-2025/full-group-picture.jpg
   alt: Group photo from GSoC Workshop at LGU
   caption: Group photo from GSoC Workshop at LGU
-  width: 1920
-  height: 1078
 links:
   - label: LinkedIn Post 1
     url: https://www.linkedin.com/posts/gdgoclgu_gdgoc-lahoregarrisonuniversity-tech-activity-7305119200535060483-koxf

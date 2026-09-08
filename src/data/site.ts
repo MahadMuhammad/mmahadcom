@@ -1,4 +1,5 @@
 import sourceRepository from "./source-repository.json";
+import portrait from "../assets/images/mahad-profile.jpg";
 
 export type Link = {
   label: string;
@@ -22,10 +23,10 @@ export const site = {
   description: "Open-source enthusiast, scientist, engineer, teacher (in that order).",
   favicon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🐸</text></svg>',
   socialImage: {
-    src: "/images/mahad-profile-960.jpg",
+    src: "/images/mahad-profile.jpg",
     alt: "Muhammad Mahad standing beside a mountain lake",
-    width: 960,
-    height: 953,
+    width: portrait.width,
+    height: portrait.height,
   },
 } as const;
 
@@ -56,7 +57,7 @@ export const githubContributionsUrl = "https://github.com/search?q=is%3Apr+autho
 
 export const about = {
   subtitle: "open-source enthusiast, scientist, engineer, teacher (in that order)",
-  profileImage: "/images/mahad-profile-960.jpg",
+  profileImage: "/images/mahad-profile.jpg",
   profileFacts: [
     "Embedded Machine Learning Engineer @ Obvio.ai",
     "Google Summer of Code 2023 & 2024 @ GNU GCC",

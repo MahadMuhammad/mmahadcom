@@ -1037,6 +1037,13 @@ try {
           await checkSharedHeader(page, viewport);
           await checkBlogFilters(page, baseUrl);
           await checkBlogReading(page, viewport);
+          for (const image of await page.locator(".gallery-trigger img").all()) {
+            await image.scrollIntoViewIfNeeded();
+            await image.evaluate((element) => element.decode());
+            const ratio = await image.evaluate((element) => element.clientWidth / element.clientHeight);
+            assert.ok(Math.abs(ratio - 1.5) < 0.02, "Gallery thumbnails must retain their 3:2 crop when image dimensions are generated");
+          }
+          if (options.screenshots && (await page.locator(".gallery-trigger img").count())) await saveScreenshot(page, `${scenario} Gallery loaded`);
         } catch (error) {
           await saveScreenshot(page, scenario);
           throw new Error(`Failed ${scenario}`, { cause: error });
