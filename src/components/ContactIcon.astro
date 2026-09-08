@@ -1,0 +1,26 @@
+---
+import { FaEnvelope, FaGithub, FaLinkedin, FaXTwitter } from "react-icons/fa6";
+import { SiCoursera } from "react-icons/si";
+
+type ContactIconName = "email" | "github" | "linkedin" | "x" | "coursera";
+
+interface Props {
+  icon: ContactIconName;
+  className?: string;
+}
+
+const { icon, className = "" } = Astro.props;
+
+const icons = {
+  email: FaEnvelope,
+  github: FaGithub,
+  linkedin: FaLinkedin,
+  x: FaXTwitter,
+  coursera: SiCoursera,
+} as const;
+const Icon = icons[icon];
+---
+
+<span class:list={["contact-icon", `contact-icon--${icon}`, className]} aria-hidden="true">
+  <Icon className="contact-icon__svg" aria-hidden="true" focusable="false" />
+</span>

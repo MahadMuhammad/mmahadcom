@@ -1,0 +1,58 @@
+---
+import type { HomeWritingEntry } from "../lib/home-writing";
+import { formatWritingDate } from "../lib/blog-source";
+
+interface Props {
+  entries: HomeWritingEntry[];
+}
+
+const { entries } = Astro.props;
+---
+
+{
+  entries.length > 0 && (
+    <section class="home-writing" aria-labelledby="home-writing-title">
+      <div class="home-section-heading">
+        <h2 id="home-writing-title">Writing</h2>
+      </div>
+      {entries.map((entry) => (
+        <article class="home-writing-entry">
+          <h3>
+            <a href={entry.href}>{entry.title}</a>
+          </h3>
+          <p class="home-writing-meta">
+            <span>{entry.format}</span>
+            <time datetime={entry.publishedAt.toISOString()}>{formatWritingDate(entry.publishedAt)}</time>
+          </p>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+<style>
+  .home-writing-entry {
+    padding-block: 1rem;
+    border-top: 1px solid var(--line);
+  }
+  .home-writing-entry h3 {
+    font: 400 1.375rem/1.4 var(--serif);
+    letter-spacing: -0.015em;
+    overflow-wrap: anywhere;
+  }
+  .home-writing-entry h3 a {
+    color: var(--ink);
+    text-decoration-color: var(--line-strong);
+  }
+  .home-writing-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+</style>

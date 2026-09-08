@@ -1,0 +1,84 @@
+@import "./tokens.css";
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+html.blog-surface {
+  --font-sans: var(--sans);
+  --font-serif: var(--serif);
+  --default-font-family: var(--sans);
+  --color-fd-background: var(--canvas);
+  --color-fd-foreground: var(--ink);
+  --color-fd-muted: var(--surface);
+  --color-fd-muted-foreground: var(--muted);
+  --color-fd-popover: var(--surface-strong);
+  --color-fd-popover-foreground: var(--ink);
+  --color-fd-card: var(--surface);
+  --color-fd-card-foreground: var(--ink);
+  --color-fd-border: var(--line);
+  --color-fd-primary: var(--link);
+  --color-fd-primary-foreground: var(--surface-strong);
+  --color-fd-secondary: var(--accent-wash);
+  --color-fd-secondary-foreground: var(--ink);
+  --color-fd-accent: var(--accent-wash);
+  --color-fd-accent-foreground: var(--ink);
+  --color-fd-ring: var(--focus);
+  --color-fd-overlay: color-mix(in srgb, var(--ink) 24%, transparent);
+  color-scheme: light;
+  background: var(--color-fd-background);
+  color: var(--color-fd-foreground);
+  font-family: var(--sans);
+}
+
+html.blog-surface.dark {
+  color-scheme: dark;
+}
+
+body.blog-surface {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--color-fd-background);
+  font-family: var(--sans);
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+.blog-surface :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--serif);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.blog-skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.5rem;
+  background: var(--color-fd-primary);
+  color: var(--color-fd-primary-foreground);
+  font-weight: 700;
+  transform: translateY(-180%);
+  transition: transform 150ms ease;
+}
+
+.blog-skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+.blog-surface :focus-visible {
+  outline: 3px solid var(--color-fd-ring);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-surface *,
+  .blog-surface *::before,
+  .blog-surface *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

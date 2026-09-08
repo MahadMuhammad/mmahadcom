@@ -1,0 +1,142 @@
+---
+import { render, type CollectionEntry } from "astro:content";
+import type { TOCItemType } from "fumadocs-core/toc";
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import { NotesDocs } from "../../components/notes/NotesDocs";
+import { site } from "../../data/site";
+import NotesLayout from "../../layouts/NotesLayout.astro";
+import { getNoteMarkdown, getNoteMarkdownPath, getNoteSourceUrl } from "../../lib/notes-llm";
+import { toNotesAnchorId } from "../../lib/notes-slug";
+import { notesSource } from "../../lib/notes-source";
+import { withTrailingSlash, withTrailingSlashPageTree } from "../../lib/url-paths";
+
+interface Props {
+  page: CollectionEntry<"notes">;
+}
+
+export async function getStaticPaths() {
+  return notesSource.getPages().map((page) => ({
+    params: {
+      slug: page.slugs.length > 0 ? page.slugs.join("/") : undefined,
+    },
+    props: { page: page.data._raw },
+  }));
+}
+
+const { page } = Astro.props;
+const { Content, headings } = await render(page);
+const slugs = typeof Astro.params.slug === "string" ? Astro.params.slug.split("/") : [];
+const notesPage = notesSource.getPage(slugs);
+
+if (!notesPage) {
+  throw new Error(`Missing notes page for /notes/${slugs.join("/")}`);
+}
+
+const toc: TOCItemType[] = headings.map((heading) => ({
+  depth: heading.depth,
+  title: heading.text,
+  url: `#${heading.slug}`,
+}));
+const canonicalPath = withTrailingSlash(Astro.url.pathname);
+const markdownUrl = getNoteMarkdownPath(notesPage.url);
+const markdownContent = getNoteMarkdown(notesPage);
+const githubUrl = getNoteSourceUrl(page);
+const publishedNotes = notesSource.getPages().filter((note) => note.data.pageType === "note");
+const matchingNotes = publishedNotes.filter((note) => {
+  if (page.data.indexType === "courses") return note.data.kind === "course" || Boolean(note.data.course);
+  if (page.data.indexType === "topics") return note.data.kind === "topic" || Boolean(note.data.topic);
+  if (page.data.indexType === "tags") return note.data.tags.length > 0;
+  return true;
+});
+const noteGroups = new Map<string, typeof matchingNotes>();
+for (const note of matchingNotes) {
+  const labels =
+    page.data.indexType === "tags"
+      ? note.data.tags
+      : page.data.indexType === "courses"
+        ? [note.data.course ?? "Other courses"]
+        : page.data.indexType === "topics"
+          ? [note.data.topic ?? "Other topics"]
+          : ["All notes"];
+  for (const label of new Set(labels)) {
+    const group = noteGroups.get(label) ?? [];
+    group.push(note);
+    noteGroups.set(label, group);
+  }
+}
+const pageTree = withTrailingSlashPageTree(notesSource.getPageTree());
+---
+
+<NotesLayout
+  title={`${page.data.title} | ${site.fullName}`}
+  description={page.data.description}
+  canonicalPath={canonicalPath}
+  markdownPath={markdownUrl}
+  pageType={page.data.pageType}
+>
+  <NotesDocs
+    tree={pageTree}
+    navTitle={site.fullName}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title={page.data.title}
+    description={page.data.description}
+    toc={toc}
+    markdownUrl={markdownUrl}
+    markdownContent={markdownContent}
+    githubUrl={githubUrl}
+    pageType={page.data.pageType}
+    client:load
+  >
+    {
+      page.data.indexType === "all" && (
+        <nav class="notes-collection-links" aria-label="Note collections">
+          <a href="/notes/courses/">
+            <>
+              <strong>Courses</strong>
+              <span>Follow a subject from the beginning.</span>
+            </>
+          </a>
+          <a href="/notes/topics/">
+            <>
+              <strong>Topics</strong>
+              <span>Find an explanation by subject.</span>
+            </>
+          </a>
+          <a href="/notes/tags/">
+            <>
+              <strong>Tags</strong>
+              <span>Connect ideas across subjects.</span>
+            </>
+          </a>
+        </nav>
+      )
+    }
+    <Content components={{ ...defaultMdxComponents }} />
+    {
+      page.data.pageType === "index" && (
+        <section aria-label="Notes in this collection">
+          {matchingNotes.length === 0 ? (
+            <p>No notes are published in this collection yet.</p>
+          ) : (
+            [...noteGroups]
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([label, notes]) => (
+                <section aria-label={label}>
+                  <h2 id={toNotesAnchorId(label)}>{label}</h2>
+                  <ul class="notes-published-list">
+                    {notes.map((note) => (
+                      <li>
+                        <a href={withTrailingSlash(note.url)}>{note.data.title}</a>
+                        <p>{note.data.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))
+          )}
+        </section>
+      )
+    }
+  </NotesDocs>
+</NotesLayout>

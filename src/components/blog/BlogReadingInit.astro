@@ -1,0 +1,13 @@
+<script is:inline data-astro-rerun>
+  (() => {
+    let preferences;
+    try {
+      preferences = JSON.parse(localStorage.getItem("mahad-blog-reading") ?? "null");
+    } catch {
+      // Reading still works when storage is unavailable or its value is invalid.
+    }
+    const root = document.documentElement;
+    root.dataset.blogTextSize = preferences?.largeText === true ? "larger" : "standard";
+    root.dataset.blogTextFont = preferences?.serifText === true ? "serif" : "sans";
+  })();
+</script>

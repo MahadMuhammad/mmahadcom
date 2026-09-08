@@ -1,0 +1,6 @@
+---
+import { BlogCodeBlock } from "./BlogCodeBlock";
+const { class: className, ...props } = Astro.props;
+---
+
+<BlogCodeBlock {...props} className={className} client:load><slot /></BlogCodeBlock>

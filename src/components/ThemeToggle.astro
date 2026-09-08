@@ -1,0 +1,43 @@
+<site-theme-toggle>
+  <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark theme" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        class="sun-path"
+        d="M12 3v2M12 19v2M3 12h2M19 12h2M5.64 5.64l1.42 1.42M16.94 16.94l1.42 1.42M18.36 5.64l-1.42 1.42M7.06 16.94l-1.42 1.42M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
+      ></path>
+      <path class="moon-path" d="M20.4 15.1A8.2 8.2 0 0 1 8.9 3.6 8.2 8.2 0 1 0 20.4 15.1Z"></path>
+    </svg>
+  </button>
+</site-theme-toggle>
+<script>
+  class SiteThemeToggle extends HTMLElement {
+    observer?: MutationObserver;
+    connectedCallback() {
+      const root = document.documentElement;
+      const button = this.querySelector("button")!;
+      const sync = () => {
+        const dark = root.dataset.theme === "dark";
+        button.setAttribute("aria-pressed", String(dark));
+        button.setAttribute("aria-label", `Switch to ${dark ? "light" : "dark"} theme`);
+      };
+      sync();
+      this.observer = new MutationObserver(sync);
+      this.observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+      button.onclick = () => {
+        const next = root.dataset.theme === "dark" ? "light" : "dark";
+        root.dataset.theme = next;
+        root.classList.toggle("dark", next === "dark");
+        try {
+          localStorage.setItem("mahad-theme", next);
+        } catch {
+          /* The current page still changes when storage is unavailable. */
+        }
+        sync();
+      };
+    }
+    disconnectedCallback() {
+      this.observer?.disconnect();
+    }
+  }
+  if (!customElements.get("site-theme-toggle")) customElements.define("site-theme-toggle", SiteThemeToggle);
+</script>

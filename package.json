@@ -1,0 +1,67 @@
+{
+  "name": "mmahad.com",
+  "private": true,
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "npm@11.16.0",
+  "engines": {
+    "node": ">=22.12.0 <25",
+    "npm": ">=11"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "postbuild": "node scripts/apply-security-headers.mjs && npm run check:generated && npm run check:llms && npm run check:links",
+    "check": "astro check",
+    "check:a11y": "node scripts/check-accessibility.mjs",
+    "check:blog": "node scripts/check-blog-fixtures.mjs",
+    "check:generated": "node scripts/check-generated-output.mjs",
+    "check:llms": "node scripts/check-llms.mjs",
+    "check:notes-anchors": "node scripts/check-notes-anchor-ids.mjs",
+    "check:html-examples": "node scripts/check-html-examples.mjs",
+    "check:links": "node scripts/check-links.mjs",
+    "format": "prettier --write \"src/**/*.{astro,ts,tsx,css,md,mdx}\" \"scripts/**/*.{js,mjs}\" \".github/workflows/*.{yml,yaml}\" astro.config.mjs tsconfig.json package.json .prettierrc README.md",
+    "format:check": "prettier --check \"src/**/*.{astro,ts,tsx,css,md,mdx}\" \"scripts/**/*.{js,mjs}\" \".github/workflows/*.{yml,yaml}\" astro.config.mjs tsconfig.json package.json .prettierrc README.md",
+    "images:workshop": "node scripts/optimize-workshop-images.mjs",
+    "preview": "astro preview",
+    "verify": "npm run check && npm run check:blog-markdown && npm run check:notes-anchors && npm run check:html-examples && npm run build",
+    "check:blog-markdown": "node scripts/check-blog-markdown.mjs"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^7.0.8",
+    "@astrojs/react": "^6.0.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.9",
+    "fumadocs-core": "^16.15.4",
+    "fumadocs-ui": "^16.15.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-icons": "5.7.0",
+    "sharp": "^0.35.4",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "4.13.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "parse5": "^7.3.0",
+    "playwright": "1.62.1",
+    "prettier": "^3.9.6",
+    "prettier-plugin-astro": "0.14.1",
+    "remark-gfm": "^4.0.1",
+    "remark-mdx": "^3.1.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "typescript": "^6.0.3",
+    "unified": "^11.0.5"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "fsevents@2.3.2": true,
+    "fsevents@2.3.3": true
+  }
+}

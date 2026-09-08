@@ -1,0 +1,36 @@
+---
+import { site } from "../data/site";
+import PortfolioSocialLinks from "./PortfolioSocialLinks.astro";
+import ExternalLink from "./ExternalLink.astro";
+import { getRepositoryUrl } from "../lib/source-links";
+
+interface Props {
+  variant?: "default" | "compact" | "home";
+}
+
+const { variant = "default" } = Astro.props;
+const repositoryUrl = getRepositoryUrl();
+---
+
+<footer class:list={["site-footer", { "site-footer--compact": variant === "compact", "site-footer--home": variant === "home" }]}>
+  <div class="shell footer-content">
+    {variant === "default" && <PortfolioSocialLinks />}
+    {
+      variant === "home" && (
+        <a class="footer-email" href="mailto:mahad@mmahad.com">
+          mahad@mmahad.com
+        </a>
+      )
+    }
+    <div class="footer-meta">
+      {
+        repositoryUrl && (
+          <p>
+            <ExternalLink href={repositoryUrl}>Website source on GitHub</ExternalLink>
+          </p>
+        )
+      }
+      <p>© {new Date().getFullYear()} {site.fullName}</p>
+    </div>
+  </div>
+</footer>

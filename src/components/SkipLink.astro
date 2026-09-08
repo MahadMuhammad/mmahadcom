@@ -1,0 +1,28 @@
+---
+interface Props {
+  href: `#${string}`;
+  label: string;
+  className?: string;
+}
+
+const { href, label, className = "skip-link" } = Astro.props;
+---
+
+<a class={className} href={href} data-skip-link>{label}</a>
+
+<script>
+  document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) return;
+
+    const link = event.target.closest<HTMLAnchorElement>("[data-skip-link]");
+    if (!link) return;
+
+    const target = document.querySelector<HTMLElement>(link.hash);
+    if (!target) return;
+
+    event.preventDefault();
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: "start" });
+    history.replaceState(history.state, "", link.hash);
+  });
+</script>

@@ -1,0 +1,38 @@
+---
+import { getCollection } from "astro:content";
+import WorkshopDetail from "../../components/workshops/WorkshopDetail.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ExternalLink from "../../components/ExternalLink.astro";
+import { getContentSourceUrl } from "../../lib/source-links";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const workshops = await getCollection("workshops");
+
+  return workshops.map((workshop) => ({
+    params: { slug: workshop.data.slug },
+    props: { workshop },
+  }));
+}
+
+const { workshop } = Astro.props;
+const githubUrl = getContentSourceUrl(workshop);
+---
+
+<BaseLayout
+  title={workshop.data.title}
+  description={workshop.data.description}
+  pageClass="workshop-page"
+  type="article"
+  socialImage={workshop.data.hero}
+>
+  <WorkshopDetail data={workshop.data} />
+  {
+    githubUrl && (
+      <p>
+        <ExternalLink href={githubUrl}>View event source on GitHub</ExternalLink>
+      </p>
+    )
+  }
+</BaseLayout>

@@ -1,0 +1,51 @@
+---
+import { getCollection, render } from "astro:content";
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import BlogCode from "../../../components/blog/BlogCode.astro";
+import BlogLayout from "../../../layouts/BlogLayout.astro";
+import { getWritingPath, type WritingEntry } from "../../../lib/blog-source";
+
+interface Props {
+  entry: WritingEntry;
+}
+
+export async function getStaticPaths() {
+  if (!import.meta.env.DEV) return [];
+
+  return (await getCollection("blog"))
+    .filter((entry) => entry.data.draft && !entry.id.split("/").some((part) => part.startsWith("_")))
+    .map((entry) => ({
+      params: { slug: getWritingPath(entry).slice("/blog/".length, -1) },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const toc = headings.map((heading) => ({ depth: heading.depth, title: heading.text, url: `#${heading.slug}` }));
+const readingMinutes = Math.max(1, Math.ceil((entry.body ?? "").split(/\s+/).length / 220));
+---
+
+<BlogLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  article
+  draftPreview
+  toc={toc}
+  readingMinutes={readingMinutes}
+  tags={entry.data.tags}
+>
+  <p class="blog-draft-notice"><strong>Draft preview · Not published</strong></p>
+  <Content components={{ pre: BlogCode, a: defaultMdxComponents.a, table: defaultMdxComponents.table }} />
+</BlogLayout>
+
+<style>
+  .blog-draft-notice {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 0.35rem;
+    background: var(--accent-wash);
+    color: var(--ink);
+    font: 0.875rem/1.5 var(--sans);
+  }
+</style>

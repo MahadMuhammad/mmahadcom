@@ -1,0 +1,44 @@
+---
+import "../styles/fumadocs.css";
+import { ClientRouter } from "astro:transitions";
+import PageMetadata from "../components/PageMetadata.astro";
+import SkipLink from "../components/SkipLink.astro";
+import { site } from "../data/site";
+
+interface Props {
+  title: string;
+  description?: string;
+  canonicalPath: string;
+  markdownPath: string;
+  pageType: "index" | "note";
+}
+
+const { title, description, canonicalPath, markdownPath, pageType } = Astro.props;
+const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
+const markdown = new URL(markdownPath, Astro.site ?? Astro.url.origin);
+---
+
+<!doctype html>
+<html lang="en" class="notes-surface">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <ClientRouter />
+    <PageMetadata
+      title={title}
+      description={description}
+      canonical={canonical}
+      markdown={markdown}
+      llms={new URL("/notes/llms.txt", site.url)}
+      type={pageType === "note" ? "article" : "website"}
+      image={new URL(site.socialImage.src, site.url)}
+      imageAlt={site.socialImage.alt}
+      imageWidth={site.socialImage.width}
+      imageHeight={site.socialImage.height}
+    />
+  </head>
+  <body class="notes-surface">
+    <SkipLink href="#notes-content" label="Skip to notes content" className="notes-skip-link" />
+    <slot />
+  </body>
+</html>

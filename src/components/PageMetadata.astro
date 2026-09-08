@@ -1,0 +1,49 @@
+---
+import { site } from "../data/site";
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: URL | string;
+  markdown?: URL | string;
+  llms?: URL | string;
+  robots?: string;
+  type?: "website" | "article";
+  image?: URL | string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+}
+
+const { title, description, canonical, markdown, llms, robots, type = "website", image, imageAlt, imageWidth, imageHeight } = Astro.props;
+const canonicalUrl = canonical?.toString();
+const markdownUrl = markdown?.toString();
+const llmsUrl = llms?.toString();
+const imageUrl = image?.toString();
+---
+
+<meta name="generator" content={Astro.generator} />
+{description && <meta name="description" content={description} />}
+<meta name="author" content={site.fullName} />
+{robots && <meta name="robots" content={robots} />}
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#1c1c1d" media="(prefers-color-scheme: dark)" />
+<meta property="og:site_name" content={site.fullName} />
+<meta property="og:title" content={title} />
+{description && <meta property="og:description" content={description} />}
+<meta property="og:type" content={type} />
+{canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+{imageUrl && <meta property="og:image" content={imageUrl} />}
+{imageAlt && <meta property="og:image:alt" content={imageAlt} />}
+{imageWidth && <meta property="og:image:width" content={String(imageWidth)} />}
+{imageHeight && <meta property="og:image:height" content={String(imageHeight)} />}
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content={title} />
+{description && <meta name="twitter:description" content={description} />}
+{imageUrl && <meta name="twitter:image" content={imageUrl} />}
+{imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}
+<link rel="icon" type="image/svg+xml" href={site.favicon} />
+{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+{markdownUrl && <link rel="alternate" type="text/markdown" href={markdownUrl} title={`${title} as Markdown`} />}
+{llmsUrl && <link rel="alternate" type="text/plain" href={llmsUrl} title="LLM content index" />}
+<title>{title}</title>

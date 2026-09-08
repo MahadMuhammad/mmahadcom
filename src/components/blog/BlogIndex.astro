@@ -1,0 +1,25 @@
+---
+import { LuArrowUpRight } from "react-icons/lu";
+
+interface Props {
+  title: string;
+  description: string;
+}
+const { title, description } = Astro.props;
+---
+
+<main>
+  <article id="blog-content" tabindex="-1" class="blog-page blog-index">
+    <header class="blog-heading">
+      <p class="blog-kicker">Experiments &amp; observations</p>
+      <h1>{title}</h1>
+      <p class="blog-deck">{description}</p>
+    </header>
+    <div class="blog-archive"><slot /></div>
+    <footer class="blog-end">
+      <p>
+        For step-by-step guides and reference material, explore <a href="/notes/">Notes <LuArrowUpRight aria-hidden="true" /></a>.
+      </p>
+    </footer>
+  </article>
+</main>

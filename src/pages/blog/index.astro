@@ -1,0 +1,31 @@
+---
+import { BlogArchive } from "../../components/blog/BlogArchive";
+import BlogLayout from "../../layouts/BlogLayout.astro";
+import { formatWritingDate, getPublishedBlog, getWritingPath } from "../../lib/blog-source";
+const entries = await getPublishedBlog();
+---
+
+<BlogLayout title="The blog" description="Things I’m building, learning, and figuring out">
+  {
+    entries.length ? (
+      <BlogArchive
+        client:load
+        posts={entries.map((entry) => ({
+          title: entry.data.title,
+          description: entry.data.description,
+          href: getWritingPath(entry),
+          date: entry.data.publishedAt.toISOString(),
+          dateLabel: formatWritingDate(entry.data.publishedAt),
+          tags: entry.data.tags,
+        }))}
+      />
+    ) : (
+      <section class="blog-empty">
+        <>
+          <h2>The first post is on its way</h2>
+          <p>This is where I’ll share what I’m building and what I learn along the way.</p>
+        </>
+      </section>
+    )
+  }
+</BlogLayout>

@@ -1,0 +1,73 @@
+---
+import ThemeInit from "../components/ThemeInit.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import { ClientRouter } from "astro:transitions";
+import type { TOCItemType } from "fumadocs-core/toc";
+import { BlogReader } from "../components/blog/BlogReader";
+import BlogIndex from "../components/blog/BlogIndex.astro";
+import BlogReadingInit from "../components/blog/BlogReadingInit.astro";
+import PageMetadata from "../components/PageMetadata.astro";
+import SkipLink from "../components/SkipLink.astro";
+import { site } from "../data/site";
+import { getPublishedBlog } from "../lib/blog-source";
+import "../styles/blog-foundation.css";
+import "../styles/blog.css";
+
+interface Props {
+  markdownContent?: string;
+  markdownUrl?: string;
+  canonicalUrl?: string;
+  githubUrl?: string;
+  title: string;
+  description: string;
+  toc?: TOCItemType[];
+  date?: string;
+  dateLabel?: string;
+  updatedLabel?: string;
+  readingMinutes?: number;
+  tags?: string[];
+  article?: boolean;
+  draftPreview?: boolean;
+}
+const { title, description, article = false, draftPreview = false, ...page } = Astro.props;
+const entries = await getPublishedBlog();
+---
+
+<!doctype html>
+<html lang="en" class="blog-surface">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <ClientRouter />
+    <ThemeInit />
+    <BlogReadingInit />
+    {page.markdownUrl && <link rel="alternate" type="text/markdown" href={new URL(page.markdownUrl, site.url)} title="Markdown version" />}
+    <PageMetadata
+      title={`${title} · ${site.fullName}`}
+      description={description}
+      canonical={new URL(Astro.url.pathname, draftPreview ? Astro.url.origin : site.url)}
+      type={article ? "article" : "website"}
+      robots={draftPreview ? "noindex, nofollow" : !article && !entries.length ? "noindex, follow" : undefined}
+      llms={new URL("/llms.txt", site.url)}
+      image={new URL(site.socialImage.src, site.url)}
+      imageAlt={site.socialImage.alt}
+      imageWidth={site.socialImage.width}
+      imageHeight={site.socialImage.height}
+    />
+  </head>
+  <body class="blog-surface">
+    <SkipLink href="#blog-content" label="Skip to blog content" className="blog-skip-link" />
+    <SiteHeader />
+    {
+      article ? (
+        <BlogReader title={title} description={description} article pathname={Astro.url.pathname} {...page} client:load>
+          <slot />
+        </BlogReader>
+      ) : (
+        <BlogIndex title={title} description={description}>
+          <slot />
+        </BlogIndex>
+      )
+    }
+  </body>
+</html>

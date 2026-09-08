@@ -1,0 +1,62 @@
+Third-party notices
+===================
+
+Scope
+-----
+
+The website's Apache 2.0 code license does not relicense third-party icons,
+project marks, photographs or other media. Existing rights and item-specific
+licenses continue to apply. A link to a project or event is not itself a reuse license.
+See COPYRIGHT.md in the source repository for the code/content boundary.
+
+React Icons 5.7.0
+-----------------
+
+This site renders selected icon SVGs through React Icons, which is licensed
+under the MIT License. The React Icons license and the Lucide/Feather notices
+used by the Notes controls are included at:
+
+  /licenses/react-icons-5.7.0-and-lucide.txt
+
+Upstream source:
+
+  https://github.com/react-icons/react-icons/tree/v5.7.0
+
+Font Awesome Free 6.5.2
+-----------------------
+
+Copyright (c) 2024 Fonticons, Inc. (https://fontawesome.com)
+
+This site includes selected Font Awesome Free icons as inline SVGs through
+React Icons. Font Awesome Free icons are licensed under CC BY 4.0 and code under
+the MIT License.
+The complete upstream license is included at:
+
+  /licenses/font-awesome-free-6.5.2.txt
+
+Upstream source:
+
+  https://github.com/FortAwesome/Font-Awesome/tree/6.5.2
+
+Lucide v5.1.0-6-g438f572e
+--------------------------
+
+The copy and check controls in Notes use Lucide icons through React Icons.
+Lucide is licensed under the ISC License and includes icons derived from the
+MIT-licensed Feather project. The applicable notices are included with the
+React Icons license above.
+
+Upstream source:
+
+  https://github.com/lucide-icons/lucide
+
+Simple Icons 12.14.0
+-------------------
+
+The Coursera mark is rendered as an inline SVG through React Icons using the
+Simple Icons collection, which is licensed under CC0 1.0:
+
+  https://github.com/simple-icons/simple-icons/tree/12.14.0
+
+The Coursera name and logo are trademarks of their respective owner. The mark
+is used only to identify the linked Coursera learner profile.

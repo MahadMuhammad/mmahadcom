@@ -1,0 +1,28 @@
+---
+import { portfolioContact } from "../data/site";
+import ContactIcon from "./ContactIcon.astro";
+import ExternalLink from "./ExternalLink.astro";
+
+interface Props {
+  className?: string;
+}
+
+const { className = "" } = Astro.props;
+---
+
+<section class:list={["footer-contact", className]} aria-labelledby="footer-contact-heading">
+  <h2 id="footer-contact-heading" class="visually-hidden">Contact</h2>
+  <ul class="footer-contact__links" aria-label="Social profiles and contact links">
+    {
+      portfolioContact.links.map((link) => (
+        <li>
+          <ExternalLink href={link.href} external={link.external} className="footer-contact__link">
+            <ContactIcon icon={link.icon} className="footer-contact__icon" />
+            <span>{link.label}</span>
+          </ExternalLink>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="footer-contact__message">{portfolioContact.message}</p>
+</section>

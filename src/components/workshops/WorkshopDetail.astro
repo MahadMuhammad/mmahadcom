@@ -1,0 +1,353 @@
+---
+import type { CollectionEntry } from "astro:content";
+import ExternalLink from "../ExternalLink.astro";
+import WorkshopGallery from "./WorkshopGallery.astro";
+
+interface Props {
+  data: CollectionEntry<"workshops">["data"];
+}
+
+const { data } = Astro.props;
+const rawDate = data.date instanceof Date ? data.date : new Date(`${data.date}T00:00:00Z`);
+const formattedDate = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+}).format(rawDate);
+
+const responsiveSrcset = (src: string) => {
+  const match = src.match(/^(.*)(\.[^.]+)$/);
+  if (!match) return src;
+
+  const [, path, extension] = match;
+  return `${path}-640${extension} 640w, ${path}-1280${extension} 1280w, ${src} 1920w`;
+};
+
+const heroSrcset = responsiveSrcset(data.hero.src);
+const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) calc(100vw - 2.5rem), 58rem";
+---
+
+<article class="workshop-shell">
+  <a class="back-link" href="/volunteering/">← Back to volunteering</a>
+
+  <header class="workshop-masthead">
+    <h1>{data.title}</h1>
+    <p class="lede">{data.description}</p>
+  </header>
+
+  <figure class="hero-photo">
+    <img
+      src={data.hero.src}
+      srcset={heroSrcset}
+      sizes={heroSizes}
+      alt={data.hero.alt}
+      title={data.hero.title}
+      width={data.hero.width}
+      height={data.hero.height}
+      loading="eager"
+      decoding="async"
+      fetchpriority="high"
+    />
+    {data.hero.caption && <figcaption>{data.hero.caption}</figcaption>}
+  </figure>
+
+  <div class="workshop-content">
+    {
+      data.sections.map((section) => {
+        const isTalk = section.heading === "My Talk";
+
+        return (
+          <section class:list={["content-section", { "content-section--talk": isTalk }]}>
+            {section.heading && <h2>{section.heading}</h2>}
+            {isTalk && data.talkIntro && data.talkTitle && (
+              <p>
+                {data.talkIntro} <strong>“{data.talkTitle}”</strong>, {section.paragraphs?.[0]}
+              </p>
+            )}
+            {(!isTalk || !data.talkIntro || !data.talkTitle) && section.paragraphs?.map((paragraph) => <p>{paragraph}</p>)}
+            {section.items && (
+              <ul>
+                {section.items.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            )}
+            {isTalk && data.talkIntro && data.talkTitle && section.paragraphs?.slice(1).map((paragraph) => <p>{paragraph}</p>)}
+          </section>
+        );
+      })
+    }
+
+    <section class="content-section event-details" aria-labelledby="event-details">
+      <h2 id="event-details">Event Details</h2>
+      <dl>
+        <div><dt>Date</dt><dd>{formattedDate}</dd></div>
+        <div><dt>Time</dt><dd>{data.time}</dd></div>
+        <div><dt>Location</dt><dd>{data.location}</dd></div>
+        {
+          data.communityGroup && (
+            <div>
+              <dt>Community group</dt>
+              <dd>{data.communityGroup}</dd>
+            </div>
+          )
+        }
+        <div><dt>Organized by</dt><dd>{data.organizer}</dd></div>
+        {
+          data.format && (
+            <div>
+              <>
+                <dt>Format</dt>
+                <dd>{data.format}</dd>
+              </>
+            </div>
+          )
+        }
+        {
+          data.registration && (
+            <div>
+              <>
+                <dt>Registration</dt>
+                <dd>{data.registration}</dd>
+              </>
+            </div>
+          )
+        }
+      </dl>
+    </section>
+
+    {
+      data.links.length > 0 && (
+        <section class="content-section resources" aria-labelledby="resources-links">
+          <h2 id="resources-links">Resources &amp; Links</h2>
+          <div class="resource-links">
+            {data.links.map((link) => (
+              <ExternalLink href={link.url}>{link.label}</ExternalLink>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <WorkshopGallery groups={data.galleryGroups} />
+
+    {
+      data.additionalInfo && (
+        <section class="content-section additional-info" aria-labelledby="additional-information">
+          <h2 id="additional-information">Additional Information</h2>
+          <p>{data.additionalInfo}</p>
+        </section>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .workshop-shell {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--muted, #59706b);
+    font-size: 0.92rem;
+    font-weight: 720;
+    text-decoration: none;
+    text-underline-offset: 0.24em;
+  }
+
+  .back-link:hover {
+    color: var(--ink, #12201e);
+    text-decoration: underline;
+  }
+
+  .back-link:focus-visible,
+  .resource-links a:focus-visible {
+    outline: 3px solid var(--focus, #e07a3f);
+    outline-offset: 3px;
+  }
+
+  .workshop-masthead {
+    max-width: 100%;
+    margin-top: clamp(1rem, 3vw, 1.75rem);
+  }
+
+  h1,
+  h2 {
+    color: var(--ink);
+    font-family: var(--serif);
+  }
+
+  h1 {
+    max-width: none;
+    margin: 0;
+    font-size: clamp(2.1rem, 5vw, 2.5rem);
+    letter-spacing: -0.035em;
+    line-height: 1.2;
+  }
+
+  .lede {
+    max-width: 100%;
+    margin: 0.85rem 0 0;
+    color: var(--muted, #59706b);
+    font-size: clamp(1.05rem, 2vw, 1.2rem);
+    line-height: 1.55;
+  }
+
+  dt {
+    color: var(--muted, #59706b);
+    font-size: 0.75rem;
+    font-weight: 780;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--ink, #12201e);
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .hero-photo {
+    display: grid;
+    gap: 0.9rem;
+    margin: clamp(2rem, 4vw, 3rem) 0 0;
+  }
+
+  .hero-photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .hero-photo figcaption {
+    color: var(--muted, #59706b);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .workshop-content {
+    max-width: 50rem;
+    margin: clamp(2.5rem, 5vw, 4rem) auto 0;
+  }
+
+  .content-section {
+    margin-top: 3.25rem;
+  }
+
+  .content-section:first-child {
+    margin-top: 0;
+  }
+
+  .content-section h2 {
+    margin: 0 0 1rem;
+    font-size: clamp(1.65rem, 3.5vw, 2rem);
+    letter-spacing: -0.025em;
+    line-height: 1.06;
+  }
+
+  .content-section p {
+    margin: 0;
+    color: var(--ink, #12201e);
+    font-size: 1.04rem;
+    line-height: 1.75;
+  }
+
+  .content-section p + p {
+    margin-top: 1rem;
+  }
+
+  .content-section strong {
+    color: var(--ink, #12201e);
+  }
+
+  .content-section ul {
+    display: grid;
+    gap: 0.65rem;
+    margin: 1.25rem 0 0;
+    padding-left: 1.3rem;
+    color: var(--ink, #12201e);
+    line-height: 1.6;
+  }
+
+  .content-section li::marker {
+    color: var(--accent, #c85d34);
+  }
+
+  .event-details dl {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    border-top: 1px solid color-mix(in srgb, var(--ink, #12201e) 16%, transparent);
+  }
+
+  .event-details dl div {
+    display: grid;
+    grid-template-columns: minmax(8rem, 0.38fr) 1fr;
+    gap: 1rem;
+    padding: 0.82rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--ink, #12201e) 12%, transparent);
+  }
+
+  .resources {
+    padding: 1.5rem 0;
+    border-block: 1px solid var(--line);
+    border-radius: 0;
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .resources h2 {
+    margin-bottom: 1.1rem;
+  }
+
+  .resource-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+  }
+
+  .resource-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 1.8rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--accent);
+    border-radius: 0.3rem;
+    background: transparent;
+    color: var(--accent-strong);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .resource-links a:hover {
+    border-color: var(--accent);
+    background: var(--accent-wash);
+  }
+
+  .additional-info {
+    padding-top: 2.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--ink, #12201e) 16%, transparent);
+  }
+
+  @media (max-width: 34rem) {
+    .event-details dl div {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+
+    .hero-photo img {
+      border-radius: var(--radius);
+    }
+  }
+</style>

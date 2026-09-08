@@ -1,0 +1,109 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import BilingualText from "../components/BilingualText.astro";
+import ExternalLink from "../components/ExternalLink.astro";
+import PageHero from "../components/PageHero.astro";
+import { githubContributionsUrl, majorContributions, openSourceProjects, pageDescriptions } from "../data/site";
+---
+
+<BaseLayout title="Open-source" description={pageDescriptions.openSource} pageClass="page--open-source">
+  <PageHero
+    title={{ english: "Open-Source Contribution", urdu: "اوپن سورس تعاون" }}
+    lead="I am passionate about contributing to open-source software and have been actively involved in various projects, including major contributions through Google Summer of Code."
+  />
+
+  <section class="section-block" aria-labelledby="gsoc-heading">
+    <div class="section-heading">
+      <h2 id="gsoc-heading"><BilingualText english="Google Summer of Code Projects" urdu="گوگل سمر آف کوڈ منصوبے" /></h2>
+    </div>
+    <div class="project-list">
+      {
+        openSourceProjects.map((project, index) => (
+          <article class="surface-card project-card">
+            <header class="project-card__header">
+              <img class="project-logo" src={project.image} alt={project.imageAlt} width="1000" height="500" loading="lazy" />
+              <div class="project-card__heading">
+                <h3>
+                  <ExternalLink href={project.href}>{project.title}</ExternalLink>
+                </h3>
+                <p class="project-card__meta">
+                  Project with <ExternalLink href={project.organizationHref}>{project.organization}</ExternalLink> · {project.date}
+                </p>
+              </div>
+            </header>
+            <div class="project-card__content">
+              {index === 0 ? (
+                <p class="project-card__body">
+                  My Google Summer of Code 2024 project involved creating a test suite adapter to run official rustc test cases on GCC Rust. Since
+                  rustc uses a different testing framework called{" "}
+                  <ExternalLink href="https://rustc-dev-guide.rust-lang.org/tests/compiletest.html">Compiletest</ExternalLink>, I developed a
+                  command-line tool in Rust, <ExternalLink href="https://github.com/Rust-GCC/rusttest-to-dg">rusttest-to-dg</ExternalLink>, to parse
+                  rustc test cases and convert them into a format compatible with GCC's DejaGNU testing framework. LWN coverage of my work can be
+                  found in <ExternalLink href="https://lwn.net/Articles/991199/">LWN’s project report</ExternalLink>.
+                </p>
+              ) : (
+                <p class="project-card__body">{project.description}</p>
+              )}
+              <p class="impact-copy">
+                <strong>Impact:</strong> {project.impact}
+              </p>
+              {"note" in project && <p class="project-note">{project.note}</p>}
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section-block" aria-labelledby="other-contributions-heading">
+    <div class="section-heading">
+      <h2 id="other-contributions-heading"><BilingualText english="Other Open-Source Contributions" urdu="دیگر اوپن سورس تعاونات" /></h2>
+    </div>
+    <div class="card-grid">
+      <article class="surface-card">
+        <h3><ExternalLink href="https://github.com/MahadMuhammad/FirstContributions">FirstContributions</ExternalLink></h3>
+        <p class="project-card__body">
+          I created a guide to help people in Pakistan and around the world make their first open-source contribution. This project aims to lower the
+          barrier to entry for newcomers to open-source development.
+        </p>
+      </article>
+      <article class="surface-card">
+        <h3>Contributions to Major Projects</h3>
+        <p class="project-card__body">I have made contributions to various open-source projects, including:</p>
+        <ul class="resource-list">
+          <li><ExternalLink href={majorContributions[0].href}>{majorContributions[0].label}</ExternalLink></li>
+          <li>
+            Added a test case to <ExternalLink href={majorContributions[1].href}>{majorContributions[1].label}</ExternalLink> in the Chromium project
+          </li>
+          <li>
+            Contributed to the official <ExternalLink href={majorContributions[2].href}>{majorContributions[2].label}</ExternalLink> documentation
+          </li>
+          <li>Made a minor fix in <ExternalLink href={majorContributions[3].href}>{majorContributions[3].label}</ExternalLink></li>
+        </ul>
+      </article>
+      <article class="surface-card">
+        <h3>All Contributions</h3>
+        <p class="project-card__body">
+          All of my open-source contributions on GitHub can be found in <ExternalLink href={githubContributionsUrl}
+            >my GitHub contribution history</ExternalLink
+          >.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section-block prose" aria-labelledby="journey-heading">
+    <div class="section-heading">
+      <h2 id="journey-heading"><BilingualText english="About My Journey" urdu="میرے اوپن سورس سفر کے بارے میں" /></h2>
+    </div>
+    <p>
+      I participated in Google Summer of Code in 2023 and 2024 as a student contributor to the <ExternalLink href="https://gcc.gnu.org/"
+        >GNU Compiler Collection (GCC)</ExternalLink
+      >, one of the world’s oldest and most widely used open-source software projects. Working on GCC has been an incredible learning experience,
+      allowing me to contribute to a project that impacts millions of developers worldwide.
+    </p>
+    <p>
+      My contributions focus on improving developer experience, enhancing compiler functionality, and making open-source more accessible to newcomers.
+    </p>
+  </section>
+</BaseLayout>

@@ -1,0 +1,123 @@
+---
+interface Props {
+  label: string;
+  beforeLabel?: string;
+  afterLabel?: string;
+}
+const { label, beforeLabel = "Before", afterLabel = "After" } = Astro.props;
+---
+
+<blog-image-comparison class="blog-image-comparison" role="group" aria-label={label}>
+  <p class="blog-comparison-title">{label}</p>
+  <div class="blog-comparison-controls" role="group" aria-label="Choose comparison view" hidden>
+    <button type="button" data-view="before" aria-pressed="true">{beforeLabel}</button>
+    <button type="button" data-view="after" aria-pressed="false">{afterLabel}</button>
+  </div>
+  <div class="blog-comparison-panels">
+    <div data-panel="before"><slot name="before" /></div>
+    <div data-panel="after"><slot name="after" /></div>
+  </div>
+  <dialog class="blog-image-dialog" aria-label="Screenshot viewer">
+    <div class="blog-image-dialog-bar">
+      <span data-image-title></span>
+      <div class="blog-image-dialog-actions">
+        <div class="blog-image-size-options" role="group" aria-label="Screenshot size">
+          <button type="button" data-image-size="fit" aria-pressed="true">Fit</button>
+          <button type="button" data-image-size="actual" aria-pressed="false">Actual size</button>
+        </div>
+        <button type="button" data-image-close autofocus>Close screenshot</button>
+      </div>
+    </div>
+    <div class="blog-image-dialog-stage" tabindex="0" role="region" aria-label="Screenshot; scroll to explore at actual size"></div>
+  </dialog>
+</blog-image-comparison>
+
+<script>
+  class BlogImageComparison extends HTMLElement {
+    private controller?: AbortController;
+    connectedCallback() {
+      this.controller?.abort();
+      this.controller = new AbortController();
+      const buttons = this.querySelectorAll<HTMLButtonElement>("button[data-view]");
+      const panels = this.querySelectorAll<HTMLElement>("[data-panel]");
+      const select = (view: string) => {
+        buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.view === view)));
+        panels.forEach((panel) => {
+          const selected = panel.dataset.panel === view;
+          panel.dataset.selected = String(selected);
+          panel.setAttribute("aria-hidden", String(!selected));
+          panel.inert = !selected;
+        });
+      };
+      select("before");
+      this.dataset.enhanced = "true";
+      this.querySelector<HTMLElement>(".blog-comparison-controls")!.hidden = false;
+      buttons.forEach((button) => button.addEventListener("click", () => select(button.dataset.view!), { signal: this.controller!.signal }));
+      const dialog = this.querySelector<HTMLDialogElement>("dialog")!;
+      const close = dialog.querySelector<HTMLButtonElement>("[data-image-close]")!;
+      const stage = dialog.querySelector<HTMLElement>(".blog-image-dialog-stage")!;
+      const sizes = dialog.querySelectorAll<HTMLButtonElement>("button[data-image-size]");
+      const options = { signal: this.controller.signal };
+      let trigger: HTMLAnchorElement | undefined;
+      const setImageSize = (size: string) => {
+        dialog.dataset.imageSize = size;
+        sizes.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.imageSize === size)));
+        stage.scrollTop = 0;
+        stage.scrollLeft = 0;
+      };
+      sizes.forEach((button) => button.addEventListener("click", () => setImageSize(button.dataset.imageSize!), options));
+      panels.forEach((panel) => {
+        const image = panel.querySelector<HTMLImageElement>("img");
+        if (!image) return;
+        panel.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((link) => {
+          if (link.href !== image.src) return;
+          link.setAttribute("aria-haspopup", "dialog");
+          link.addEventListener(
+            "click",
+            (event) => {
+              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              trigger = link;
+              const enlarged = new Image();
+              enlarged.src = image.currentSrc || image.src;
+              enlarged.alt = image.alt;
+              stage.replaceChildren(enlarged);
+              dialog.querySelector("[data-image-title]")!.textContent = [...buttons].find(
+                (button) => button.dataset.view === panel.dataset.panel
+              )!.textContent;
+              setImageSize("fit");
+              dialog.showModal();
+              close.focus({ preventScroll: true });
+            },
+            options
+          );
+        });
+      });
+      close.addEventListener("click", () => dialog.close(), options);
+      dialog.addEventListener(
+        "click",
+        (event) => {
+          const bounds = dialog.getBoundingClientRect();
+          if (
+            event.target === dialog &&
+            (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)
+          )
+            dialog.close();
+        },
+        options
+      );
+      dialog.addEventListener(
+        "close",
+        () => {
+          if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+        },
+        options
+      );
+    }
+    disconnectedCallback() {
+      this.querySelector<HTMLDialogElement>("dialog[open]")?.close();
+      this.controller?.abort();
+    }
+  }
+  if (!customElements.get("blog-image-comparison")) customElements.define("blog-image-comparison", BlogImageComparison);
+</script>

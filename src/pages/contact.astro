@@ -1,0 +1,32 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ContactIcon from "../components/ContactIcon.astro";
+import ExternalLink from "../components/ExternalLink.astro";
+import PageHero from "../components/PageHero.astro";
+import { contactChannels, pageDescriptions } from "../data/site";
+---
+
+<BaseLayout title="Contact" description={pageDescriptions.contact} pageClass="page--contact" footerVariant="compact">
+  <PageHero
+    title={{ english: "Contact", urdu: "رابطے" }}
+    lead="Feel free to reach out to me through any of the following channels. I'm always open to discussing open-source projects, collaboration opportunities, or answering questions."
+  />
+
+  <section class="contact-grid" aria-label="Contact information">
+    {
+      contactChannels.map((channel) => (
+        <article class="surface-card contact-card" aria-labelledby={`contact-${channel.icon}`}>
+          <h2 id={`contact-${channel.icon}`}>
+            <ContactIcon icon={channel.icon} className="contact-card__icon" />
+            <span>{channel.title}</span>
+          </h2>
+          <p class="contact-card__copy">
+            <ExternalLink href={channel.href} external={channel.external}>
+              {channel.value}
+            </ExternalLink>
+          </p>
+        </article>
+      ))
+    }
+  </section>
+</BaseLayout>

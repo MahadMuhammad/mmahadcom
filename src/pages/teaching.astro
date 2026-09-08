@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ExternalLink from "../components/ExternalLink.astro";
+import PageHero from "../components/PageHero.astro";
+import { pageDescriptions, teachingExperiences } from "../data/site";
+---
+
+<BaseLayout title="Teaching" description={pageDescriptions.teaching} pageClass="page--teaching">
+  <PageHero
+    title={{ english: "Teaching", urdu: "تدریس" }}
+    lead="I am passionate about education and have been involved in teaching and mentoring students, both in formal academic settings and through community initiatives. Below are highlights of my teaching experiences."
+  />
+
+  <section class="experience-list" aria-label="Teaching experiences">
+    {
+      teachingExperiences.map((experience, index) => (
+        <article class="experience-card">
+          <h2>{experience.title}</h2>
+          <p class="card-meta">{experience.meta}</p>
+          <div class="experience-card__body">
+            <p>{experience.paragraphs[0]}</p>
+            {index === 0 ? (
+              <p>
+                <strong>Key Contributions:</strong> Developed educational materials, provided hands-on guidance on compiler design principles, and
+                helped students understand the complete compilation process from source code to executable.
+              </p>
+            ) : (
+              <p>
+                <strong>Program Details:</strong> The program is managed by the{" "}
+                <ExternalLink href="https://www.nu.edu.pk/international/Overview">FAST NUCES International Education Office (IEO)</ExternalLink> and
+                the Higher Education Commission (HEC) of Pakistan. This initiative is part of the Thrive Program by{" "}
+                <ExternalLink href="https://www.wearealight.org">Alight</ExternalLink> and uses Coursera Instructor licenses provided by the{" "}
+                <ExternalLink href="https://www.educationaboveall.org/">Education Above All Foundation</ExternalLink> to support student learning and
+                progress tracking.
+              </p>
+            )}
+          </div>
+        </article>
+      ))
+    }
+  </section>
+</BaseLayout>

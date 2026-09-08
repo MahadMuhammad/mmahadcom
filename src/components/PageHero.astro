@@ -1,0 +1,16 @@
+---
+import BilingualText, { type BilingualLabel } from "./BilingualText.astro";
+
+interface Props {
+  title: string | BilingualLabel;
+  lead?: string;
+}
+
+const { title, lead } = Astro.props;
+const bilingualTitle = typeof title === "string" ? undefined : title;
+---
+
+<section class="page-hero">
+  <h1>{bilingualTitle ? <BilingualText {...bilingualTitle} /> : title}</h1>
+  {lead && <p class="page-hero__lead">{lead}</p>}
+</section>

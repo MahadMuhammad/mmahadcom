@@ -1,0 +1,159 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import BilingualText from "../components/BilingualText.astro";
+import ExternalLink from "../components/ExternalLink.astro";
+import LinkPills from "../components/LinkPills.astro";
+import PageHero from "../components/PageHero.astro";
+import { communityLeadership, legacyWorkshops, pageDescriptions } from "../data/site";
+
+const workshopContent = await getCollection("workshops");
+const workshopContentBySlug = new Map(workshopContent.map((entry) => [entry.data.slug, entry.data]));
+const eventDateFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+const workshopCards = [
+  ...workshopContent
+    .toSorted((left, right) => right.data.date.valueOf() - left.data.date.valueOf())
+    .map(({ data }) => ({
+      title: data.title,
+      meta: `${eventDateFormatter.format(data.date)} | ${data.location}`,
+      description: data.description,
+      detail: data.talkTitle ? `Topic: “${data.talkTitle}”` : data.topic ? `Topic: “${data.topic}”` : undefined,
+      links: [
+        {
+          label: "View Event Details",
+          href: `/volunteering/${data.slug}/`,
+          external: false,
+        },
+        ...data.links.map((link) => ({ label: link.label, href: link.url })),
+      ],
+      hero: data.hero,
+    })),
+  ...legacyWorkshops.map((workshop) => ({ ...workshop, hero: undefined })),
+];
+
+const responsiveSrcset = (src: string) => {
+  const match = src.match(/^(.*)(\.[^.]+)$/);
+  if (!match) return src;
+
+  const [, path, extension] = match;
+  return `${path}-640${extension} 640w, ${path}-1280${extension} 1280w, ${src} 1920w`;
+};
+
+const workshopImageSizes = "(max-width: 45rem) calc(100vw - 3.6rem), (max-width: 60.5rem) calc((100vw - 8rem) / 2), 26rem";
+const communityPhoto = workshopContentBySlug.get("open-source-connect-pakistan-2026")?.hero;
+const communityPhotoSizes = "(max-width: 45rem) calc(100vw - 1.5rem), (max-width: 60.5rem) calc(100vw - 2.5rem), 58rem";
+---
+
+<BaseLayout title="Volunteering" description={pageDescriptions.volunteering} pageClass="page--volunteering">
+  <PageHero
+    title={{ english: "Volunteering", urdu: "رضاکاری" }}
+    lead="I am passionate about giving back to the tech community through workshops, mentorship, and community building. Below are highlights of my volunteering initiatives and the events I've organized."
+  />
+
+  <section class="section-block" aria-labelledby="leadership-heading">
+    <div class="section-heading">
+      <h2 id="leadership-heading"><BilingualText english="Community Leadership" urdu="کمیونٹی قیادت" /></h2>
+    </div>
+    <div class="community-grid">
+      {
+        communityLeadership.map((role) => (
+          <article class="surface-card community-card">
+            <h3>{role.title}</h3>
+            <p class="card-meta">
+              <strong>{role.role}</strong> | {role.date}
+            </p>
+            <p class="community-card__description">{role.description}</p>
+            {role.links.length > 0 &&
+              (role.title === "Techonix.pk" ? (
+                <p class="community-card__presence">
+                  <strong>Online Presence:</strong>{" "}
+                  {role.links.map((link, index) => (
+                    <>
+                      {index > 0 && <span aria-hidden="true"> | </span>}
+                      <ExternalLink href={link.href}>{link.label}</ExternalLink>
+                    </>
+                  ))}
+                </p>
+              ) : (
+                <LinkPills links={role.links} />
+              ))}
+            {role.collaborators.length > 0 && (
+              <>
+                <span class="community-card__subhead">Collaborators:</span>
+                <ul class="resource-list">
+                  {role.collaborators.map((collaborator) => (
+                    <li>
+                      {"href" in collaborator ? <ExternalLink href={collaborator.href}>{collaborator.label}</ExternalLink> : collaborator.label}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section-block" aria-labelledby="workshops-heading">
+    <div class="section-heading">
+      <h2 id="workshops-heading"><BilingualText english="Events & Workshops" urdu="ایونٹس اور ورکشاپس" /></h2>
+    </div>
+    <p class="workshop-note">
+      Note: Some GDSC community links may be expired as GDSCs have been converted to GDGs. Please refer to Instagram posts for additional details.
+    </p>
+    <div class="workshop-grid">
+      {
+        workshopCards.map((workshop) => (
+          <article class="surface-card workshop-card">
+            {workshop.hero && (
+              <div class="workshop-card__media">
+                <img
+                  src={workshop.hero.src}
+                  srcset={responsiveSrcset(workshop.hero.src)}
+                  sizes={workshopImageSizes}
+                  alt={workshop.hero.alt}
+                  title={workshop.hero.title}
+                  width={workshop.hero.width}
+                  height={workshop.hero.height}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
+            <h3>{workshop.title}</h3>
+            <p class="card-meta">{workshop.meta}</p>
+            <p class="workshop-card__description">{workshop.description}</p>
+            {"detail" in workshop && <p class="workshop-detail">{workshop.detail}</p>}
+            <LinkPills links={workshop.links} variant="primary" />
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  {
+    communityPhoto && (
+      <figure class="community-photo">
+        <img
+          src={communityPhoto.src}
+          srcset={responsiveSrcset(communityPhoto.src)}
+          sizes={communityPhotoSizes}
+          alt={communityPhoto.alt}
+          title={communityPhoto.title}
+          width={communityPhoto.width}
+          height={communityPhoto.height}
+          loading="lazy"
+          decoding="async"
+        />
+        {communityPhoto.caption && <figcaption>{communityPhoto.caption}</figcaption>}
+      </figure>
+    )
+  }
+</BaseLayout>

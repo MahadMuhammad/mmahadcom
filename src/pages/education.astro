@@ -1,0 +1,51 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import BilingualText from "../components/BilingualText.astro";
+import ExternalLink from "../components/ExternalLink.astro";
+import LinkPills from "../components/LinkPills.astro";
+import PageHero from "../components/PageHero.astro";
+import { education, pageDescriptions } from "../data/site";
+---
+
+<BaseLayout title="Education" description={pageDescriptions.education} pageClass="page--education">
+  <PageHero title={{ english: "Education", urdu: "تعلیم" }} />
+
+  <section class="section-block" aria-label="Formal education">
+    <article class="surface-card degree-card">
+      <h2 class="degree-card__degree">{education.degree.title}</h2>
+      <p class="degree-card__institution">{education.degree.institution}</p>
+      <p class="degree-card__date">{education.degree.date}</p>
+    </article>
+  </section>
+
+  <section class="section-block" aria-labelledby="online-courses-heading">
+    <div class="section-heading">
+      <h2 id="online-courses-heading"><BilingualText english="Online Courses & Certifications" urdu="آن لائن کورسز اور اسناد" /></h2>
+    </div>
+    <div class="prose">
+      <p>
+        I have supplemented my formal education by auditing courses on Coursera and edX, reading books from my university library, and utilizing
+        resources such as MIT OpenCourseWare, YouTube, and Stanford’s course websites. For example, to study compilers, I followed the material from <ExternalLink
+          href="https://web.stanford.edu/class/cs143/">Stanford CS143</ExternalLink
+        >, and for parallel computing, I used resources from <ExternalLink href="https://cs149.stanford.edu/">Stanford CS149</ExternalLink>.
+      </p>
+      <p>
+        Thanks to the <ExternalLink href="https://dlsei.hec.gov.pk/">HEC DLSEI program</ExternalLink>, I have earned several certifications from
+        Coursera. You can find more details on my Coursera Learner <ExternalLink href="https://www.coursera.org/learner/mahad">Profile</ExternalLink>.
+      </p>
+    </div>
+    <div class="certification-grid" style="margin-top: 1.5rem;">
+      {
+        education.certificates.map((certificate) => (
+          <article class="surface-card credential-card">
+            <div>
+              <h3>{certificate.title}</h3>
+              <p class="credential-card__provider">{certificate.provider}</p>
+            </div>
+            <LinkPills links={[{ label: certificate.label, href: certificate.href }]} variant="inline" />
+          </article>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

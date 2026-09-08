@@ -1,0 +1,98 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ExternalLink from "../components/ExternalLink.astro";
+import HomeWriting from "../components/HomeWriting.astro";
+import { getRecentWriting } from "../lib/home-writing";
+import { about, pageDescriptions, site } from "../data/site";
+import "../styles/home.css";
+
+const writing = await getRecentWriting();
+const projects = [
+  {
+    title: "rusttest-to-dg",
+    href: "https://github.com/Rust-GCC/rusttest-to-dg",
+    year: "2024",
+    description: "A Rust tool that adapts rustc tests for GCC’s DejaGNU testing framework.",
+    coverage: "https://lwn.net/Articles/991199/",
+  },
+  {
+    title: "Error codes for GCC Rust",
+    href: "https://summerofcode.withgoogle.com/archive/2023/projects/PZbjvfZl",
+    year: "2023",
+    description: "Adding error-code support to bring GCC Rust’s diagnostics into alignment with rustc.",
+  },
+  {
+    title: "FirstContributions",
+    href: "https://github.com/MahadMuhammad/FirstContributions",
+    description: "A guide to help people make their first open-source contribution.",
+  },
+];
+---
+
+<BaseLayout title="About" description={pageDescriptions.about} pageClass="page--home" footerVariant="home">
+  <div class="home-layout">
+    <section class="home-introduction" aria-labelledby="home-title">
+      <h1 id="home-title">
+        {site.firstName}{" "}<span class="home-name-divider" aria-hidden="true">/</span>{" "}<span lang="ur" dir="rtl">{site.nameUrdu}</span>
+      </h1>
+      <p class="home-subtitle">Open-source enthusiast, scientist, engineer, teacher.</p>
+      <div class="home-lead">
+        <p>
+          I work on embedded machine learning at <ExternalLink href="https://www.obvio.ai/">Obvio.ai</ExternalLink>, building computer vision systems
+          with the aim of making roads safer.
+        </p>
+        <p>
+          I contributed to <ExternalLink href="https://gcc.gnu.org/">GCC Rust</ExternalLink> through Google Summer of Code in 2023 and 2024. My interests
+          sit around compilers, embedded ML, and helping people get started in open source.
+        </p>
+      </div>
+      <details class="home-background">
+        <summary>A little more about me</summary>
+        <p>
+          I studied Computer Science at <a href="/education/">FAST NUCES</a>. I’ve helped teach compiler construction and foundational AI, and
+          organized workshops for students across Pakistan.
+        </p>
+        <div class="home-background-links"><a href="/teaching/">Teaching</a><a href="/volunteering/">Volunteering</a></div>
+      </details>
+    </section>
+
+    <figure class="home-portrait">
+      <img
+        src={about.profileImage}
+        srcset="/images/mahad-profile-480.jpg 480w, /images/mahad-profile-960.jpg 960w, /images/mahad-profile.jpg 1954w"
+        sizes="(max-width: 640px) 136px, 176px"
+        alt="Muhammad Mahad beside a mountain lake"
+        width="960"
+        height="953"
+        decoding="async"
+        fetchpriority="high"
+      />
+      <figcaption>Mahad, away from the keyboard.</figcaption>
+    </figure>
+
+    <HomeWriting entries={writing} />
+
+    <section class="home-work" aria-labelledby="home-work-title">
+      <div class="home-section-heading"><h2 id="home-work-title">Selected open-source work</h2></div>
+      {
+        projects.map((project) => (
+          <article class="home-project">
+            <div class="home-project-heading">
+              <h3>
+                <ExternalLink href={project.href}>{project.title}</ExternalLink>
+              </h3>
+              {project.year && <time datetime={project.year}>{project.year}</time>}
+            </div>
+            <p>{project.description}</p>
+            {project.coverage && (
+              <ExternalLink href={project.coverage} className="home-source-link">
+                Read the LWN coverage
+              </ExternalLink>
+            )}
+          </article>
+        ))
+      }
+      <a class="home-all-work" href="/open-source/">All open-source contributions</a>
+    </section>
+  </div>
+</BaseLayout>

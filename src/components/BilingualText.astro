@@ -1,0 +1,19 @@
+---
+export interface BilingualLabel {
+  english: string;
+  urdu: string;
+}
+
+interface Props extends BilingualLabel {
+  separator?: string;
+}
+
+const { english, urdu, separator = "/" } = Astro.props;
+---
+
+<span class="bilingual-text">
+  <span>{english}</span><span class="bilingual-text__translation"
+    ><span class="bilingual-text__separator" aria-hidden="true">{separator}</span><span class="bilingual-text__urdu" lang="ur" dir="rtl">{urdu}</span
+    ></span
+  >
+</span>

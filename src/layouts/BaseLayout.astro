@@ -1,0 +1,70 @@
+---
+import ThemeInit from "../components/ThemeInit.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import PageMetadata from "../components/PageMetadata.astro";
+import SkipLink from "../components/SkipLink.astro";
+import { site } from "../data/site";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  pageClass?: string;
+  canonicalPath?: string | false;
+  robots?: string;
+  type?: "website" | "article";
+  socialImage?: {
+    src: string;
+    alt: string;
+    width: number;
+    height: number;
+  };
+  footerVariant?: "default" | "compact" | "home";
+}
+
+const {
+  title,
+  description = site.description,
+  pageClass = "",
+  canonicalPath,
+  robots,
+  type = "website",
+  socialImage = site.socialImage,
+  footerVariant = "default",
+} = Astro.props;
+const pageTitle = title ? `${title} · ${site.fullName}` : site.fullName;
+const path = Astro.url.pathname === "/" ? "/" : `${Astro.url.pathname.replace(/\/$/, "")}/`;
+const canonical = canonicalPath === false ? undefined : new URL(canonicalPath ?? path, site.url).toString();
+const socialImageUrl = new URL(socialImage.src, site.url).toString();
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <PageMetadata
+      title={pageTitle}
+      description={description}
+      canonical={canonical}
+      llms={new URL("/llms.txt", site.url)}
+      robots={robots}
+      type={type}
+      image={socialImageUrl}
+      imageAlt={socialImage.alt}
+      imageWidth={socialImage.width}
+      imageHeight={socialImage.height}
+    />
+    <slot name="head" />
+    <ThemeInit />
+  </head>
+  <body class={pageClass}>
+    <SkipLink href="#main-content" label="Skip to content" />
+    <SiteHeader />
+    <main id="main-content" class="site-main" tabindex="-1">
+      <slot />
+    </main>
+    <SiteFooter variant={footerVariant} />
+  </body>
+</html>

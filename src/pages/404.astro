@@ -1,0 +1,22 @@
+---
+import BilingualText from "../components/BilingualText.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="404/۴۰۴: Page not found"
+  description="Looks like there has been a mistake. Nothing exists here."
+  pageClass="page--not-found"
+  canonicalPath={false}
+  robots="noindex, nofollow"
+>
+  <section class="not-found" aria-labelledby="not-found-heading">
+    <p class="not-found__eyebrow" aria-hidden="true">404</p>
+    <h1 id="not-found-heading"><BilingualText english="404" urdu="۴۰۴" />: Page not found</h1>
+    <p class="not-found__lead">Looks like there has been a mistake. Nothing exists here.</p>
+    <p>Often in my life, I have not found what I've been looking for, but found something fun anyway.</p>
+    <p class="not-found__redirect">
+      You can return to the <a href="/">home page</a> or use the navigation above to keep exploring.
+    </p>
+  </section>
+</BaseLayout>

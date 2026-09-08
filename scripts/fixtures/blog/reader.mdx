@@ -1,0 +1,77 @@
+---
+title: Blog reader verification
+description: Synthetic content for exercising the shared reading template
+slug: qa-blog-reader
+publishedAt: 2000-01-02
+tags:
+  - verification
+  - diagrams
+---
+
+import BlogImageComparison from "../../../components/blog/BlogImageComparison.astro";
+
+This synthetic article exists only in the isolated verification build. It checks the reusable interface without publishing a personal draft or relying on a particular article's wording.
+
+## Reading and references
+
+The same text should remain readable when a visitor changes its size or typeface. The reading controls, contents navigation, and source references must work with a keyboard as well as a pointer.
+
+This sentence has a source reference.[^source] The reference has an ordinary link, a return link, and a readable explanation. Its desktop presentation must leave enough room for the contents panel.
+
+> A quotation remains ordinary text in the page and in the Markdown export.
+
+| Input    | Output               |
+| -------- | -------------------- |
+| Markdown | A readable article   |
+| Code     | A selectable example |
+
+## Comparing figures
+
+The first comparison uses custom labels. Switching the selected figure must preserve the position of the following text. The screenshot viewer should close without changing the article URL or losing keyboard focus.
+
+<BlogImageComparison label="First comparison" beforeLabel="Earlier diagram" afterLabel="Revised diagram">
+<figure slot="before">
+
+[![Blue verification diagram](/images/__blog-qa/before.svg)](/images/__blog-qa/before.svg)
+
+<figcaption>A blue circle on a white field. [Enlarge the earlier diagram](/images/__blog-qa/before.svg).</figcaption>
+</figure>
+<figure slot="after">
+
+[![Brown verification diagram](/images/__blog-qa/after.svg)](/images/__blog-qa/after.svg)
+
+<figcaption>A brown circle on a white field. [Enlarge the revised diagram](/images/__blog-qa/after.svg).</figcaption>
+</figure>
+</BlogImageComparison>
+
+The second comparison deliberately uses the default button labels and has no separate enlargement link in its captions. Each instance must operate independently, and both images and captions must survive Markdown export.
+
+<BlogImageComparison label="Second comparison">
+<figure slot="before">
+
+[![Brown diagram before the second comparison](/images/__blog-qa/after.svg)](/images/__blog-qa/after.svg)
+
+<figcaption>The second comparison starts with the brown diagram.</figcaption>
+</figure>
+<figure slot="after">
+
+[![Blue diagram after the second comparison](/images/__blog-qa/before.svg)](/images/__blog-qa/before.svg)
+
+<figcaption>The second comparison ends with the blue diagram.</figcaption>
+</figure>
+</BlogImageComparison>
+
+## Copying and exporting
+
+A code block needs an independent copy control. Its success state should confirm the action without moving adjacent content. A failure must leave the example available for manual selection.
+
+```js
+const result = [1, 2, 3].map((value) => value * 2);
+console.log(result);
+```
+
+The article actions export this same content as Markdown. Relative image URLs and source links become portable URLs, while headings, tables, quotations, code, and references retain their meaning.
+
+The test ends with enough article content to exercise scroll navigation. Opening the first contents link should bring its heading below the fixed navigation, regardless of the current scroll position or text size.
+
+[^source]: A synthetic reference to the [Astro documentation](https://docs.astro.build/). This is verification content, not a personal citation.

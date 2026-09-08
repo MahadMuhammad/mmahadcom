@@ -1,0 +1,36 @@
+---
+import { getBlogExport } from "../../lib/blog-export";
+import { render } from "astro:content";
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import BlogCode from "../../components/blog/BlogCode.astro";
+import BlogLayout from "../../layouts/BlogLayout.astro";
+import { formatWritingDate, getPublishedBlog, getWritingPath, type PublishedWriting } from "../../lib/blog-source";
+interface Props {
+  entry: PublishedWriting;
+}
+export async function getStaticPaths() {
+  return (await getPublishedBlog()).map((entry) => ({
+    params: { slug: getWritingPath(entry).slice("/blog/".length, -1) },
+    props: { entry },
+  }));
+}
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const toc = headings.map((heading) => ({ depth: heading.depth, title: heading.text, url: `#${heading.slug}` }));
+const readingMinutes = Math.max(1, Math.ceil((entry.body ?? "").split(/\s+/).length / 220));
+---
+
+<BlogLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  article
+  {...getBlogExport(entry)}
+  toc={toc}
+  date={entry.data.publishedAt.toISOString()}
+  dateLabel={formatWritingDate(entry.data.publishedAt)}
+  updatedLabel={entry.data.updatedAt && formatWritingDate(entry.data.updatedAt)}
+  readingMinutes={readingMinutes}
+  tags={entry.data.tags}
+>
+  <Content components={{ pre: BlogCode, a: defaultMdxComponents.a, table: defaultMdxComponents.table }} />
+</BlogLayout>

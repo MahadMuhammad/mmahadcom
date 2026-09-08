@@ -1,0 +1,17 @@
+node_modules/
+.astro/
+dist/
+.wrangler/
+playwright-report/
+test-results/
+
+.DS_Store
+.env
+.env.*
+!.env.example
+.dev.vars*
+!.dev.vars.example
+
+.codex/
+.agents/
+design-qa.md

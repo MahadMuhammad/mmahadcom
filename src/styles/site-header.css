@@ -1,0 +1,226 @@
+.site-header {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--header-bg);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 3.9rem;
+  gap: 1rem;
+}
+
+.site-brand {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.site-brand:hover {
+  color: var(--ink);
+}
+
+.primary-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.6rem, 1.8vw, 1.35rem);
+  margin-left: auto;
+}
+
+.primary-nav a,
+.mobile-menu nav a {
+  position: relative;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.primary-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.primary-nav a::after {
+  position: absolute;
+  right: 0;
+  bottom: 0.25rem;
+  left: 0;
+  height: 2px;
+  content: "";
+  background: var(--accent);
+  border-radius: 99px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 160ms ease;
+}
+
+.primary-nav a:hover,
+.primary-nav a.is-current {
+  color: var(--ink);
+}
+
+.primary-nav a:hover::after,
+.primary-nav a.is-current::after {
+  transform: scaleX(1);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.theme-toggle {
+  display: inline-grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  color: var(--ink);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  place-items: center;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.theme-toggle:hover {
+  color: var(--accent-strong);
+  background: var(--accent-wash);
+  border-color: var(--accent);
+}
+
+.theme-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.moon-path {
+  display: none;
+}
+
+:root[data-theme="dark"] .sun-path {
+  display: none;
+}
+
+:root[data-theme="dark"] .moon-path {
+  display: block;
+}
+
+.mobile-menu {
+  display: none;
+  position: relative;
+}
+
+.mobile-menu summary {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.54rem;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.82rem;
+  font-weight: 730;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.mobile-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.mobile-menu summary svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-width: 1.8;
+}
+
+.mobile-menu nav {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  right: 0;
+  display: grid;
+  width: min(18rem, calc(100vw - 2.5rem));
+  max-height: calc(100dvh - 5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.5rem;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  box-shadow: var(--shadow-strong);
+}
+
+.mobile-menu nav a {
+  padding: 0.68rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.mobile-menu nav a:hover,
+.mobile-menu nav a[aria-current="page"] {
+  color: var(--ink);
+  background: var(--accent-wash);
+}
+
+@media (max-width: 980px) {
+  .primary-nav {
+    display: none;
+  }
+
+  .mobile-menu {
+    display: block;
+  }
+}
+
+.site-header .header-shell {
+  width: min(100% - 2.5rem, 72rem);
+  margin-inline: auto;
+}
+.site-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  line-height: 1.2;
+}
+.site-header {
+  font-family: var(--sans);
+  line-height: 1.5;
+}
+@media (max-width: 720px) {
+  .site-header .header-shell {
+    width: calc(100% - 1.5rem);
+  }
+  .header-inner {
+    min-height: 4.1rem;
+  }
+  .site-brand {
+    font-size: 1.14rem;
+  }
+}

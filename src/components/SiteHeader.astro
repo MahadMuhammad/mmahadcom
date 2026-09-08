@@ -1,0 +1,86 @@
+---
+import { navigation, site } from "../data/site";
+import "../styles/site-header.css";
+import ThemeToggle from "./ThemeToggle.astro";
+
+const pathname = Astro.url.pathname;
+const isCurrent = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href));
+---
+
+<header class="site-header">
+  <site-navigation class="header-shell header-inner">
+    <a class="site-brand" href="/" aria-label={`${site.name}, home`}>
+      <span>{site.firstName}</span><span aria-hidden="true">/</span><span lang="ur" dir="rtl">{site.nameUrdu}</span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Primary navigation">
+      {
+        navigation.map((item) => (
+          <a href={item.href} aria-current={isCurrent(item.href) ? "page" : undefined} class:list={{ "is-current": isCurrent(item.href) }}>
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="header-actions">
+      <ThemeToggle />
+      <details class="mobile-menu">
+        <summary role="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobile-navigation">
+          <span>menu</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+          </svg>
+        </summary>
+        <nav id="mobile-navigation" aria-label="Mobile navigation">
+          {
+            navigation.map((item) => (
+              <a href={item.href} aria-current={isCurrent(item.href) ? "page" : undefined}>
+                {item.label}
+              </a>
+            ))
+          }
+        </nav>
+      </details>
+    </div>
+  </site-navigation>
+</header>
+
+<script>
+  class SiteNavigation extends HTMLElement {
+    controller?: AbortController;
+    connectedCallback() {
+      this.controller = new AbortController();
+      const { signal } = this.controller;
+      const menu = this.querySelector<HTMLDetailsElement>(".mobile-menu");
+      const summary = menu?.querySelector("summary");
+      const sync = () => {
+        summary?.setAttribute("aria-expanded", String(menu?.open ?? false));
+        summary?.setAttribute("aria-label", `${menu?.open ? "Close" : "Open"} navigation menu`);
+      };
+      sync();
+      menu?.addEventListener("toggle", sync, { signal });
+      document.addEventListener(
+        "keydown",
+        (event) => {
+          if (event.key === "Escape" && menu?.open) {
+            menu.open = false;
+            summary?.focus();
+          }
+        },
+        { signal }
+      );
+      document.addEventListener(
+        "click",
+        (event) => {
+          if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) menu.open = false;
+        },
+        { signal }
+      );
+    }
+    disconnectedCallback() {
+      this.controller?.abort();
+    }
+  }
+  if (!customElements.get("site-navigation")) customElements.define("site-navigation", SiteNavigation);
+</script>

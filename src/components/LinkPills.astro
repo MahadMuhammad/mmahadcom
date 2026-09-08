@@ -1,0 +1,28 @@
+---
+import ExternalLink from "./ExternalLink.astro";
+
+interface LinkItem {
+  label: string;
+  href: string;
+  external?: boolean;
+}
+
+interface Props {
+  links: readonly LinkItem[];
+  variant?: "primary" | "quiet" | "inline";
+}
+
+const { links, variant = "quiet" } = Astro.props;
+---
+
+{
+  links.length > 0 && (
+    <div class:list={["link-pills", `link-pills--${variant}`]}>
+      {links.map((link) => (
+        <ExternalLink href={link.href} external={link.external !== false} className="link-pill">
+          {link.label}
+        </ExternalLink>
+      ))}
+    </div>
+  )
+}
