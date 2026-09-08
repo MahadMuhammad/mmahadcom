@@ -8,7 +8,7 @@ const parser = unified().use(remarkParse).use(remarkMdx).use(remarkGfm);
 const writer = unified().use(remarkStringify).use(remarkGfm);
 
 /** Export portable Markdown, keeping code intact and linking to browser-only examples. */
-export function createBlogMarkdown({ title, description, body, canonicalUrl, author, date, attribution = true }) {
+export function createBlogMarkdown({ title, description, body, canonicalUrl, author, date, updatedDate, attribution = true }) {
   const tree = parser.parse(body);
 
   function clean(nodes) {
@@ -35,5 +35,5 @@ export function createBlogMarkdown({ title, description, body, canonicalUrl, aut
 
   tree.children = clean(tree.children);
   const credit = attribution ? `\n---\n\nWritten by ${author} · [Original article](${canonicalUrl})\n` : "";
-  return `# ${title}\n\n${description}\n\n${date ? `Published: ${date}\n\n` : ""}${writer.stringify(tree).trim()}\n${credit}`;
+  return `# ${title}\n\n${description}\n\n${date ? `Published: ${date}\n\n` : ""}${updatedDate ? `Updated: ${updatedDate}\n\n` : ""}${writer.stringify(tree).trim()}\n${credit}`;
 }

@@ -17,6 +17,7 @@ export function getBlogExport(entry: PublishedWriting) {
       canonicalUrl,
       author: site.fullName,
       date: entry.data.publishedAt.toISOString().slice(0, 10),
+      updatedDate: entry.data.updatedAt?.toISOString().slice(0, 10),
       attribution: entry.data.attribution,
     }),
   };

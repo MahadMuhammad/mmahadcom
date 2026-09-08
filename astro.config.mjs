@@ -20,6 +20,7 @@ export default defineConfig({
   // continue to emit the preferred trailing-slash form.
   trailingSlash: "ignore",
   output: "static",
+  prerenderConflictBehavior: "error",
   redirects: {
     "/essays": "/blog/",
     "/about": "/",

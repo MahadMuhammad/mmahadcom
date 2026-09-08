@@ -7,6 +7,12 @@ updates:
     cooldown:
       default-days: 7
     open-pull-requests-limit: 3
+    groups:
+      astro-markdown:
+        patterns:
+          - astro
+          - "@astrojs/mdx"
+          - "@astrojs/markdown-remark"
 
   - package-ecosystem: github-actions
     directory: /
