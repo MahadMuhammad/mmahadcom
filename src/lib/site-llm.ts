@@ -92,6 +92,8 @@ export async function getSiteLLMsIndex(): Promise<string> {
     "",
     "## Machine-readable resources",
     "",
+    link("Blog RSS", absoluteUrl("/blog/rss.xml"), "Subscribe to published Blog posts."),
+    link("Notes RSS", absoluteUrl("/notes/rss.xml"), "Subscribe to published Notes."),
     link(
       "Extended site context",
       absoluteUrl("/llms-full.txt"),
@@ -103,7 +105,7 @@ export async function getSiteLLMsIndex(): Promise<string> {
       absoluteUrl("/notes/llms-full.txt"),
       "Available note content with an explicit empty state when no notes are published."
     ),
-    link("Sitemap", absoluteUrl("/sitemap.xml"), "All indexable website routes."),
+    link("Sitemap", absoluteUrl("/sitemap-index.xml"), "All indexable website routes."),
     ""
   );
 

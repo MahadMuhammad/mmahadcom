@@ -96,8 +96,6 @@ const workshops = defineCollection({
       .default([]),
     hero: workshopImage.extend({
       caption: z.string().optional(),
-      width: z.number().int().positive(),
-      height: z.number().int().positive(),
     }),
     sections: z
       .array(

@@ -11,7 +11,9 @@ const textExtensions = new Set([".md", ".txt", ".xml"]);
 const canonicalOrigin = new URL("https://www.mmahad.com");
 const requiredOutputRoutes = [
   "/robots.txt",
-  "/sitemap.xml",
+  "/sitemap-index.xml",
+  "/blog/rss.xml",
+  "/notes/rss.xml",
   "/llms.txt",
   "/llms-full.txt",
   "/notes/llms.txt",

@@ -10,29 +10,41 @@
 
 /llms.txt
   Content-Type: text/plain; charset=utf-8
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=0, must-revalidate
 
 /llms-full.txt
   Content-Type: text/plain; charset=utf-8
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=0, must-revalidate
 
 /notes/llms.txt
   Content-Type: text/plain; charset=utf-8
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=0, must-revalidate
 
 /notes/llms-full.txt
   Content-Type: text/plain; charset=utf-8
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=0, must-revalidate
 
 /notes.md
   Content-Type: text/markdown; charset=utf-8
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=0, must-revalidate
 
 /notes/*.md
   Content-Type: text/markdown; charset=utf-8
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=0, must-revalidate
 
 /blog/*.md
   Content-Type: text/markdown; charset=utf-8
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=0, must-revalidate
   X-Robots-Tag: noindex
+
+/blog/rss.xml
+  Cache-Control: public, max-age=0, must-revalidate
+
+/notes/rss.xml
+  Cache-Control: public, max-age=0, must-revalidate
+
+/robots.txt
+  Cache-Control: public, max-age=0, must-revalidate
+
+/sitemap*.xml
+  Cache-Control: public, max-age=0, must-revalidate

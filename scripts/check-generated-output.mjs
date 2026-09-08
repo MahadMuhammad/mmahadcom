@@ -3,10 +3,10 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { parse } from "parse5";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = path.join(projectRoot, "dist");
-const publicDirectory = path.join(projectRoot, "public");
 assert.ok(!(await readdir(outputDirectory)).includes("drafts"), "Development draft previews must never appear in production dist.");
 const siteOrigin = "https://www.mmahad.com";
 const sourceRepository = JSON.parse(await readFile(new URL("../src/data/source-repository.json", import.meta.url), "utf8"));
@@ -28,6 +28,17 @@ async function assertOpenGraphMetadata(relativePath, expectedImage) {
   const outputPath = path.join(outputDirectory, relativePath);
   const html = await readFile(outputPath, "utf8");
   const label = path.relative(projectRoot, outputPath);
+  const document = parse(html, {
+    onParseError: ({ code }) => assert.notEqual(code, "duplicate-attribute", `${label} contains duplicate HTML attributes.`),
+  });
+  function checkImageLoading(node) {
+    if (node.tagName === "img") {
+      const attrs = Object.fromEntries(node.attrs.map(({ name, value }) => [name, value]));
+      if (attrs.fetchpriority === "high") assert.notEqual(attrs.loading, "lazy", `${label} must load its high-priority image eagerly.`);
+    }
+    for (const child of node.childNodes ?? []) checkImageLoading(child);
+  }
+  checkImageLoading(document);
   const image = metaContent(html, "og:image");
 
   assert.equal(image, expectedImage, `${label} has the wrong og:image.`);
@@ -35,8 +46,8 @@ async function assertOpenGraphMetadata(relativePath, expectedImage) {
   const imageUrl = new URL(image);
   assert.equal(imageUrl.origin, siteOrigin, `${label} uses an OG image outside the canonical site.`);
 
-  const assetPath = path.resolve(publicDirectory, `.${decodeURIComponent(imageUrl.pathname)}`);
-  const assetRelativePath = path.relative(publicDirectory, assetPath);
+  const assetPath = path.resolve(outputDirectory, `.${decodeURIComponent(imageUrl.pathname)}`);
+  const assetRelativePath = path.relative(outputDirectory, assetPath);
   assert.ok(
     assetRelativePath && !assetRelativePath.startsWith(`..${path.sep}`) && !path.isAbsolute(assetRelativePath),
     `${label} has an unsafe OG image path.`
@@ -116,7 +127,7 @@ function assertPngHasNoPrivateMetadata(buffer, label) {
 }
 
 async function assertPublicImagesHaveNoPrivateMetadata() {
-  const imagePaths = await listFiles(publicDirectory);
+  const imagePaths = (await listFiles(outputDirectory)).filter((file) => rasterImageExtensions.has(path.extname(file).toLowerCase()));
 
   for (const imagePath of imagePaths) {
     const extension = path.extname(imagePath).toLowerCase();
@@ -134,7 +145,7 @@ async function assertPublicImagesHaveNoPrivateMetadata() {
   }
 }
 
-const defaultImage = "https://www.mmahad.com/images/mahad-profile-960.jpg";
+const defaultImage = "https://www.mmahad.com/images/mahad-profile.jpg";
 
 for (const relativePath of [
   "404.html",

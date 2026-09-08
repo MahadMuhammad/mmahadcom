@@ -240,6 +240,32 @@ async function checkLandscapeNavigation(browser, baseUrl) {
   }
 }
 
+async function checkNotesAuthoring(page) {
+  if (new URL(page.url()).pathname !== "/notes/qa-authoring/") return;
+  const rust = page.getByRole("tab", { name: "Rust", exact: true });
+  const python = page.getByRole("tab", { name: "Python", exact: true });
+  await rust.focus();
+  await rust.press("ArrowRight");
+  await page.locator('[role="tab"][aria-selected="true"]').filter({ hasText: "Python" }).waitFor();
+  assert.equal(await python.evaluate((element) => element === document.activeElement), true);
+  assert.equal(await page.getByRole("tabpanel").getByText('print("Hello from Python")', { exact: true }).isVisible(), true);
+  await python.press("ArrowLeft");
+  await page.locator('[role="tab"][aria-selected="true"]').filter({ hasText: "Rust" }).waitFor();
+  assert.equal(await page.getByRole("tabpanel").getByText('println!("Hello from Rust");', { exact: true }).isVisible(), true);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          globalThis.__notesCode = text;
+        },
+      },
+    });
+  });
+  await page.getByRole("tabpanel").getByRole("button", { name: "Copy Text", exact: true }).click();
+  await page.waitForFunction(() => globalThis.__notesCode?.includes('println!("Hello from Rust");'));
+}
+
 async function checkBlogFilters(page, baseUrl) {
   const filters = page.getByRole("navigation", { name: "Filter posts by topic" });
   if (!(await filters.count())) return;
@@ -1037,6 +1063,14 @@ try {
           await checkSharedHeader(page, viewport);
           await checkBlogFilters(page, baseUrl);
           await checkBlogReading(page, viewport);
+          await checkNotesAuthoring(page);
+          for (const image of await page.locator(".gallery-trigger img").all()) {
+            await image.scrollIntoViewIfNeeded();
+            await image.evaluate((element) => element.decode());
+            const ratio = await image.evaluate((element) => element.clientWidth / element.clientHeight);
+            assert.ok(Math.abs(ratio - 1.5) < 0.02, "Gallery thumbnails must retain their 3:2 crop when image dimensions are generated");
+          }
+          if (options.screenshots && (await page.locator(".gallery-trigger img").count())) await saveScreenshot(page, `${scenario} Gallery loaded`);
         } catch (error) {
           await saveScreenshot(page, scenario);
           throw new Error(`Failed ${scenario}`, { cause: error });

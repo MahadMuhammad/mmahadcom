@@ -1,4 +1,5 @@
 ---
+import ResponsiveImage from "../ResponsiveImage.astro";
 import type { CollectionEntry } from "astro:content";
 import ExternalLink from "../ExternalLink.astro";
 import WorkshopGallery from "./WorkshopGallery.astro";
@@ -16,15 +17,6 @@ const formattedDate = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 }).format(rawDate);
 
-const responsiveSrcset = (src: string) => {
-  const match = src.match(/^(.*)(\.[^.]+)$/);
-  if (!match) return src;
-
-  const [, path, extension] = match;
-  return `${path}-640${extension} 640w, ${path}-1280${extension} 1280w, ${src} 1920w`;
-};
-
-const heroSrcset = responsiveSrcset(data.hero.src);
 const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) calc(100vw - 2.5rem), 58rem";
 ---
 
@@ -37,14 +29,11 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
   </header>
 
   <figure class="hero-photo">
-    <img
+    <ResponsiveImage
       src={data.hero.src}
-      srcset={heroSrcset}
       sizes={heroSizes}
       alt={data.hero.alt}
       title={data.hero.title}
-      width={data.hero.width}
-      height={data.hero.height}
       loading="eager"
       decoding="async"
       fetchpriority="high"

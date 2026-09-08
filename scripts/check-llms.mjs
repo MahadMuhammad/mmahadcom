@@ -6,11 +6,15 @@ import { parse } from "parse5";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = path.join(projectRoot, "dist");
-const [siteIndex, siteFull, notesIndex, notesFull, sitemap] = await Promise.all(
-  ["llms.txt", "llms-full.txt", "notes/llms.txt", "notes/llms-full.txt", "sitemap.xml"].map((file) =>
+const [siteIndex, siteFull, notesIndex, notesFull, sitemapIndex, robots] = await Promise.all(
+  ["llms.txt", "llms-full.txt", "notes/llms.txt", "notes/llms-full.txt", "sitemap-index.xml", "robots.txt"].map((file) =>
     readFile(path.join(outputDirectory, file), "utf8")
   )
 );
+assert.ok(robots.includes("Sitemap: https://www.mmahad.com/sitemap-index.xml"), "Robots must advertise the generated sitemap index");
+const sitemapFiles = [...sitemapIndex.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname);
+assert.ok(sitemapFiles.length > 0, "The sitemap index must list a generated sitemap");
+const sitemap = (await Promise.all(sitemapFiles.map((file) => readFile(path.join(outputDirectory, file), "utf8")))).join("\n");
 const notesIndexUrls = new Set([
   "https://www.mmahad.com/notes.md",
   "https://www.mmahad.com/notes/courses.md",
@@ -89,6 +93,21 @@ for (const url of [...sitemapUrls].filter(
 const publishedNotePageUrls = [...sitemapUrls].filter((url) => url.startsWith("https://www.mmahad.com/notes/") && !notesIndexPageUrls.has(url));
 const publishedNoteUrls = publishedNotePageUrls.map((url) => `${url.replace(/\/$/, "")}.md`);
 const publishedBlogUrls = [...sitemapUrls].filter((url) => url.startsWith("https://www.mmahad.com/blog/") && url !== "https://www.mmahad.com/blog/");
+for (const [file, expectedUrls] of [
+  ["blog/rss.xml", publishedBlogUrls],
+  ["notes/rss.xml", publishedNotePageUrls],
+]) {
+  const feed = await readFile(path.join(outputDirectory, file), "utf8");
+  const items = [...feed.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((match) => match[1]);
+  const links = items.map((item) => item.match(/<link>([^<]+)<\/link>/)?.[1]);
+  assert.deepEqual(links.toSorted(), expectedUrls.toSorted(), `${file} must contain every published article and no drafts or index pages`);
+  for (const item of items) {
+    const url = item.match(/<link>([^<]+)<\/link>/)[1];
+    const markdown = await readFile(path.join(outputDirectory, new URL(url).pathname.replace(/\/$/, ".md")), "utf8");
+    const date = item.match(/<pubDate>([^<]+)<\/pubDate>/)?.[1];
+    assert.equal(new Date(date).toISOString().slice(0, 10), markdown.match(/^Published: (.+)$/m)?.[1], `${file} must preserve publication dates`);
+  }
+}
 const listedBlogUrls = [...new Set(siteIndex.match(/https:\/\/www\.mmahad\.com\/blog\/[^)\s]+\//g) ?? [])];
 assert.deepEqual(listedBlogUrls.toSorted(), publishedBlogUrls.toSorted(), "Blog export must match published Blog routes");
 for (const url of publishedBlogUrls) {
