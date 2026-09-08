@@ -59,6 +59,17 @@ try {
     options.theme,
     ...(options.screenshots ? ["--screenshots"] : []),
   ]);
+  await writeFile(
+    join(fixtureContent, "duplicate.mdx"),
+    "---\ntitle: Duplicate route\ndescription: Must fail instead of replacing another article\nslug: qa-blog-reader\npublishedAt: 2000-01-04\n---\n\nDuplicate article.\n"
+  );
+  const collision = spawnSync(process.execPath, [join("node_modules/astro", astroPackage.bin.astro), "build"], {
+    cwd: fixtureRoot,
+    encoding: "utf8",
+  });
+  if (collision.error) throw collision.error;
+  assert.notEqual(collision.status, 0, "Duplicate article slugs must fail the build rather than replace published content.");
+  assert.match(`${collision.stdout}\n${collision.stderr}`, /multiple entries with the same slug/);
   console.log("Blog fixtures passed: archive filters, reader controls, two comparisons, references, and a tagless post.");
 } finally {
   // Keep screenshots for diagnosis, but never keep or publish the synthetic build.
