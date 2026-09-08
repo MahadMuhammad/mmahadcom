@@ -1,0 +1,6 @@
+---
+import { NotesCode } from "./NotesCode";
+const { class: className, ...props } = Astro.props;
+---
+
+<NotesCode {...props} className={className} client:load><slot /></NotesCode>

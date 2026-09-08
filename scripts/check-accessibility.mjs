@@ -240,6 +240,32 @@ async function checkLandscapeNavigation(browser, baseUrl) {
   }
 }
 
+async function checkNotesAuthoring(page) {
+  if (new URL(page.url()).pathname !== "/notes/qa-authoring/") return;
+  const rust = page.getByRole("tab", { name: "Rust", exact: true });
+  const python = page.getByRole("tab", { name: "Python", exact: true });
+  await rust.focus();
+  await rust.press("ArrowRight");
+  await page.locator('[role="tab"][aria-selected="true"]').filter({ hasText: "Python" }).waitFor();
+  assert.equal(await python.evaluate((element) => element === document.activeElement), true);
+  assert.equal(await page.getByRole("tabpanel").getByText('print("Hello from Python")', { exact: true }).isVisible(), true);
+  await python.press("ArrowLeft");
+  await page.locator('[role="tab"][aria-selected="true"]').filter({ hasText: "Rust" }).waitFor();
+  assert.equal(await page.getByRole("tabpanel").getByText('println!("Hello from Rust");', { exact: true }).isVisible(), true);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          globalThis.__notesCode = text;
+        },
+      },
+    });
+  });
+  await page.getByRole("tabpanel").getByRole("button", { name: "Copy Text", exact: true }).click();
+  await page.waitForFunction(() => globalThis.__notesCode?.includes('println!("Hello from Rust");'));
+}
+
 async function checkBlogFilters(page, baseUrl) {
   const filters = page.getByRole("navigation", { name: "Filter posts by topic" });
   if (!(await filters.count())) return;
@@ -1037,6 +1063,7 @@ try {
           await checkSharedHeader(page, viewport);
           await checkBlogFilters(page, baseUrl);
           await checkBlogReading(page, viewport);
+          await checkNotesAuthoring(page);
           for (const image of await page.locator(".gallery-trigger img").all()) {
             await image.scrollIntoViewIfNeeded();
             await image.evaluate((element) => element.decode());

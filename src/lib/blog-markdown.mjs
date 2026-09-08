@@ -11,7 +11,7 @@ const writer = unified().use(remarkStringify).use(remarkGfm);
 export function createBlogMarkdown({ title, description, body, canonicalUrl, author, date, updatedDate, attribution = true }) {
   const tree = parser.parse(body);
 
-  function clean(nodes) {
+  function clean(nodes, tabPanels = false) {
     return nodes.flatMap((node) => {
       if (node.type === "mdxjsEsm") return [];
       if (node.type === "mdxFlowExpression" || node.type === "mdxTextExpression") {
@@ -19,6 +19,25 @@ export function createBlogMarkdown({ title, description, body, canonicalUrl, aut
         throw new Error(`${title}: move computed MDX text into Markdown so exports contain the same explanation.`);
       }
       if (node.type === "mdxJsxFlowElement" || node.type === "mdxJsxTextElement") {
+        const attribute = (name) => node.attributes.find((attr) => attr.type === "mdxJsxAttribute" && attr.name === name)?.value;
+        if (node.name === "Tabs") return clean(node.children, true);
+        if (tabPanels && typeof attribute("slot") === "string") {
+          return [{ type: "heading", depth: 3, children: [{ type: "text", value: attribute("slot") }] }, ...clean(node.children)];
+        }
+        if (node.name === "Callout" && node.type === "mdxJsxFlowElement") {
+          const title = attribute("title");
+          return [
+            {
+              type: "blockquote",
+              children: [
+                ...(typeof title === "string"
+                  ? [{ type: "paragraph", children: [{ type: "strong", children: [{ type: "text", value: title }] }] }]
+                  : []),
+                ...clean(node.children),
+              ],
+            },
+          ];
+        }
         if (node.children.length) return clean(node.children);
         const link = {
           type: "link",

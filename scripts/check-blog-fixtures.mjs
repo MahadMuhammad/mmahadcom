@@ -33,6 +33,7 @@ try {
   const fixtureContent = join(fixtureRoot, "src/content/blog/__qa");
   await mkdir(fixtureContent);
   await cp(join(projectRoot, "scripts/fixtures/blog"), fixtureContent, copyOptions);
+  await cp(join(projectRoot, "scripts/fixtures/notes"), join(fixtureRoot, "src/content/notes"), copyOptions);
   const images = join(fixtureRoot, "public/images/__blog-qa");
   await mkdir(images);
   for (const [name, color] of [
@@ -49,12 +50,21 @@ try {
   const astroPackage = JSON.parse(await readFile(join(fixtureRoot, "node_modules/astro/package.json"), "utf8"));
   run(join("node_modules/astro", astroPackage.bin.astro), ["build"]);
   run("scripts/apply-security-headers.mjs");
+  run("scripts/check-llms.mjs");
+  run("scripts/check-links.mjs");
+  const noteMarkdown = await readFile(join(fixtureRoot, "dist/notes/qa-authoring.md"), "utf8");
+  assert.match(noteMarkdown, /### Rust\n/);
+  assert.match(noteMarkdown, /### Python\n/);
+  assert.match(noteMarkdown, /\*\*Before you begin\*\*/);
+  assert.match(noteMarkdown, /Save your work before running the example/);
+  assert.match(noteMarkdown, /Hello from Rust/);
+  assert.match(noteMarkdown, /Hello from Python/);
   for (const output of ["blog/qa-blog-reader.md", "llms-full.txt"]) {
     assert.match(await readFile(join(fixtureRoot, "dist", output), "utf8"), /Published: 2000-01-02\n\nUpdated: 2000-01-03\n/);
   }
   run("scripts/check-accessibility.mjs", [
     "--routes",
-    "/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/",
+    "/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/,/notes/qa-authoring/",
     "--theme",
     options.theme,
     ...(options.screenshots ? ["--screenshots"] : []),

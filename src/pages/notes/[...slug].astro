@@ -2,6 +2,9 @@
 import { render, type CollectionEntry } from "astro:content";
 import type { TOCItemType } from "fumadocs-core/toc";
 import defaultMdxComponents from "fumadocs-ui/mdx";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import NotesTabs from "../../components/notes/NotesTabs.astro";
+import NotesCode from "../../components/notes/NotesCode.astro";
 import { NotesDocs } from "../../components/notes/NotesDocs";
 import { site } from "../../data/site";
 import NotesLayout from "../../layouts/NotesLayout.astro";
@@ -112,7 +115,7 @@ const pageTree = withTrailingSlashPageTree(notesSource.getPageTree());
         </nav>
       )
     }
-    <Content components={{ ...defaultMdxComponents }} />
+    <Content components={{ ...defaultMdxComponents, Step, Steps, Tabs: NotesTabs, pre: NotesCode }} />
     {
       page.data.pageType === "index" && (
         <section aria-label="Notes in this collection">

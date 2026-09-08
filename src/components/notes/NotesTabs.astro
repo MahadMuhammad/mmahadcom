@@ -1,0 +1,16 @@
+---
+import { NotesTabs } from "./NotesTabs";
+
+interface Props {
+  label: string;
+}
+
+const panels = await Promise.all(
+  Object.keys(Astro.slots)
+    .filter((name) => name !== "default")
+    .map(async (label) => ({ label, html: await Astro.slots.render(label) }))
+);
+if (panels.length < 2) throw new Error("Tabs needs at least two named content slots.");
+---
+
+<NotesTabs label={Astro.props.label} panels={panels} client:load />
