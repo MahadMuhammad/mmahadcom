@@ -1,6 +1,26 @@
 @import "./reading-foundation.css";
 @import "./fumadocs-preset.css";
 
+html.notes-surface:has(.notes-search-fallback[open]) {
+  overflow: hidden;
+}
+
+.notes-search-fallback {
+  width: min(36rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.75rem;
+  background: var(--color-fd-popover);
+  color: var(--color-fd-popover-foreground);
+}
+
+.notes-search-fallback::backdrop {
+  background: var(--color-fd-overlay);
+}
+
 .notes-page-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
