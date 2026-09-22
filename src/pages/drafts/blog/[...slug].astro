@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import BlogCode from "../../../components/blog/BlogCode.astro";
 import BlogLayout from "../../../layouts/BlogLayout.astro";
+import "../../../styles/blog-article.css";
 import { getWritingPath, type WritingEntry } from "../../../lib/blog-source";
 
 interface Props {
