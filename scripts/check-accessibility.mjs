@@ -881,23 +881,84 @@ async function checkClipboardInteractions(browser, baseUrl) {
   }
 }
 
-async function checkSearchFailureRecovery(browser, baseUrl, failure) {
-  const context = await browser.newContext({ colorScheme: options.theme, viewport: viewports[1] });
+async function checkDeferredSearch(browser, baseUrl, viewport) {
+  const context = await browser.newContext({ colorScheme: options.theme, viewport });
   const page = await preparePage(context);
-  let requests = 0;
-
-  await page.route(failure === "index" ? "**/notes/api/search.json" : "**/NotesSearchDialog.*.js", async (route) => {
-    requests += 1;
-    if (requests === 1) {
-      await route.abort("failed");
-    } else {
-      await route.continue();
-    }
+  let release;
+  const loaded = new Promise((resolve) => {
+    release = resolve;
   });
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  try {
+    await loadRoute(page, baseUrl, "/notes/");
+    const initialScripts = await page.evaluate(() =>
+      performance
+        .getEntriesByType("resource")
+        .filter((entry) => new URL(entry.name).pathname.endsWith(".js"))
+        .map((entry) => ({ url: entry.name, bytes: entry.decodedBodySize }))
+    );
+    assert.ok(!initialScripts.some((entry) => entry.url.includes("/NotesSearchDialog.")), "Search loaded before it was opened.");
+    const initialBytes = initialScripts.reduce((total, entry) => total + entry.bytes, 0);
+    assert.ok(
+      initialBytes > 0 && initialBytes < 500_000,
+      `Initial Notes JavaScript exceeded the 500 KB budget: ${initialBytes} bytes. Check for eager search dependencies.`
+    );
+
+    await page.route("**/NotesSearchDialog.*.js", async (route) => {
+      await loaded;
+      await route.continue();
+    });
+    const requested = page.waitForRequest("**/NotesSearchDialog.*.js");
+    const trigger = page.locator("button[data-search]:visible, button[data-search-full]:visible").first();
+    await trigger.click();
+    await requested;
+    // Cancel through the existing shortcut while the lazy chunk is still in flight.
+    await page.keyboard.press("Control+k");
+    release();
+    await page.waitForLoadState("networkidle");
+    assert.equal(await page.getByPlaceholder("Search").isVisible(), false, "A cancelled search opened after its download completed.");
+    assert.equal(await page.locator("#notes-content .notes-page-heading h1").isVisible(), true);
+    await trigger.click();
+    await page.getByPlaceholder("Search").fill("course");
+    await page.locator('[role="dialog"]:visible').getByText("Course notes", { exact: true }).waitFor({ state: "visible" });
+    await page.keyboard.press("Escape");
+    await page.getByPlaceholder("Search").waitFor({ state: "hidden" });
+    await trigger.click();
+    await page.getByPlaceholder("Search").waitFor({ state: "visible" });
+    assert.deepEqual(errors, [], "Deferred search caused browser errors.");
+  } finally {
+    release();
+    await context.close();
+  }
+}
+
+async function checkSearchFailureRecovery(browser, baseUrl, failure, viewport) {
+  const context = await browser.newContext({ colorScheme: options.theme, viewport: { ...viewport, height: 320 } });
+  const page = await preparePage(context);
+  let retrying = false;
+  const failedResources = new Set();
+  const retriedResources = new Set();
+
+  const failedResource = failure === "index" ? "**/notes/api/search.json" : failure === "dependency" ? "**/_astro/*.js" : "**/NotesSearchDialog.*.js";
 
   try {
     await loadRoute(page, baseUrl, "/notes/");
-    await page.locator("button[data-search]:visible, button[data-search-full]:visible").first().click();
+    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight), "Search recovery must exercise a scrollable page.");
+    await page.route(failedResource, async (route) => {
+      if (failure === "dependency" && /\/NotesSearchDialog\.[^/]+\.js$/.test(route.request().url())) return route.continue();
+      const resource = new URL(route.request().url()).pathname;
+      if (!retrying) {
+        failedResources.add(resource);
+        await route.abort("failed");
+      } else {
+        retriedResources.add(resource);
+        await route.continue();
+      }
+    });
+
+    const trigger = page.locator("button[data-search]:visible, button[data-search-full]:visible").first();
+    await trigger.click();
     if (failure === "index") await page.getByPlaceholder("Search").fill("course");
     await page.getByRole("heading", { name: "Search unavailable" }).waitFor({ state: "visible" });
 
@@ -914,6 +975,39 @@ async function checkSearchFailureRecovery(browser, baseUrl, failure) {
     );
     assert.equal((await new AxeBuilder({ page }).analyze()).violations.length, 0, "The local search-failure fallback has accessibility violations.");
 
+    const fallback = page.getByRole("dialog", { name: "Search unavailable" });
+    assert.equal(await fallback.evaluate((element) => element.contains(document.activeElement)), true, "Search recovery did not receive focus.");
+    const readingPosition = await page.evaluate(() => scrollY);
+    await page.mouse.move(0, 0);
+    await page.mouse.wheel(0, 500);
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.equal(await page.evaluate(() => scrollY), readingPosition, "The Notes page scrolled behind search recovery.");
+    for (const close of [
+      () => page.getByRole("button", { name: "Close", exact: true }).click(),
+      () => page.keyboard.press("Escape"),
+      () => page.mouse.click(0, 0),
+    ]) {
+      await close();
+      await fallback.waitFor({ state: "hidden" });
+      assert.notEqual(
+        await page.evaluate(() => getComputedStyle(document.documentElement).overflowY),
+        "hidden",
+        "Closing search recovery kept the page scroll locked."
+      );
+      assert.equal(await trigger.evaluate((element) => element === document.activeElement), true, "Search recovery did not restore trigger focus.");
+      await trigger.click();
+      await fallback.waitFor({ state: "visible" });
+    }
+    await page.getByRole("button", { name: "Retry search" }).focus();
+    await page.keyboard.press("Shift+Tab");
+    assert.equal(await fallback.evaluate((element) => element.contains(document.activeElement)), true, "Keyboard focus escaped search recovery.");
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Control+k");
+    await fallback.waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.equal(await fallback.isVisible(), true, "A delayed close event dismissed the reopened search recovery dialog.");
+
+    retrying = true;
     await Promise.all([page.waitForNavigation({ waitUntil: "networkidle" }), page.getByRole("button", { name: "Retry search" }).click()]);
 
     await page.locator("button[data-search]:visible, button[data-search-full]:visible").first().click();
@@ -921,7 +1015,8 @@ async function checkSearchFailureRecovery(browser, baseUrl, failure) {
     await searchInput.waitFor({ state: "visible" });
     await searchInput.fill("course");
     await page.locator('[role="dialog"]:visible').getByText("Course notes", { exact: true }).waitFor({ state: "visible" });
-    assert.ok(requests >= 2, `Retry did not request the failed search ${failure} again.`);
+    assert.ok(failedResources.size > 0, `The search ${failure} failure was not exercised.`);
+    for (const resource of failedResources) assert.ok(retriedResources.has(resource), `Retry did not request ${resource} again.`);
     assert.equal(await page.locator("#notes-content .notes-page-heading h1").isVisible(), true);
   } finally {
     await context.close();
@@ -1115,8 +1210,10 @@ try {
 
   if (includesRoute("/notes/")) {
     await checkClipboardInteractions(browser, baseUrl);
-    await checkSearchFailureRecovery(browser, baseUrl, "chunk");
-    await checkSearchFailureRecovery(browser, baseUrl, "index");
+    for (const viewport of viewports) {
+      await checkDeferredSearch(browser, baseUrl, viewport);
+      for (const failure of ["chunk", "dependency", "index"]) await checkSearchFailureRecovery(browser, baseUrl, failure, viewport);
+    }
     await checkNotesTocPopover(browser, baseUrl);
   }
   if (includesRoute("/")) await checkLandscapeNavigation(browser, baseUrl);

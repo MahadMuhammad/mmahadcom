@@ -4,6 +4,7 @@ import { render } from "astro:content";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import BlogCode from "../../components/blog/BlogCode.astro";
 import BlogLayout from "../../layouts/BlogLayout.astro";
+import "../../styles/blog-article.css";
 import { formatWritingDate, getPublishedBlog, getWritingPath, type PublishedWriting } from "../../lib/blog-source";
 interface Props {
   entry: PublishedWriting;

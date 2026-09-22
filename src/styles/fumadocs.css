@@ -1,75 +1,24 @@
-@import "./tokens.css";
-@import "tailwindcss";
-@import "fumadocs-ui/css/neutral.css";
-@import "fumadocs-ui/css/preset.css";
+@import "./reading-foundation.css";
+@import "./fumadocs-preset.css";
 
-html.notes-surface {
-  --font-sans: var(--sans);
-  --font-serif: var(--serif);
-  --default-font-family: var(--sans);
-  --color-fd-background: var(--canvas);
-  --color-fd-foreground: var(--ink);
-  --color-fd-muted: var(--surface);
-  --color-fd-muted-foreground: var(--muted);
-  --color-fd-popover: var(--surface-strong);
-  --color-fd-popover-foreground: var(--ink);
-  --color-fd-card: var(--surface);
-  --color-fd-card-foreground: var(--ink);
-  --color-fd-border: var(--line);
-  --color-fd-primary: var(--link);
-  --color-fd-primary-foreground: var(--surface-strong);
-  --color-fd-secondary: var(--accent-wash);
-  --color-fd-secondary-foreground: var(--ink);
-  --color-fd-accent: var(--accent-wash);
-  --color-fd-accent-foreground: var(--ink);
-  --color-fd-ring: var(--focus);
-  --color-fd-overlay: color-mix(in srgb, var(--ink) 24%, transparent);
-  color-scheme: light;
-  background: var(--color-fd-background);
-  color: var(--color-fd-foreground);
-  font-family: var(--sans);
+html.notes-surface:has(.notes-search-fallback[open]) {
+  overflow: hidden;
 }
 
-html.notes-surface.dark {
-  color-scheme: dark;
+.notes-search-fallback {
+  width: min(36rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.75rem;
+  background: var(--color-fd-popover);
+  color: var(--color-fd-popover-foreground);
 }
 
-body.notes-surface {
-  min-height: 100vh;
-  margin: 0;
-  background: var(--color-fd-background);
-  font-family: var(--sans);
-  line-height: 1.65;
-  text-rendering: optimizeLegibility;
-}
-
-.notes-surface :where(h1, h2, h3, h4, h5, h6) {
-  font-family: var(--serif);
-  font-weight: 650;
-  letter-spacing: -0.025em;
-}
-
-.notes-skip-link {
-  position: fixed;
-  z-index: 100;
-  top: 0.75rem;
-  left: 0.75rem;
-  padding: 0.65rem 0.8rem;
-  border-radius: 0.5rem;
-  background: var(--color-fd-primary);
-  color: var(--color-fd-primary-foreground);
-  font-weight: 700;
-  transform: translateY(-180%);
-  transition: transform 150ms ease;
-}
-
-.notes-skip-link:focus-visible {
-  transform: translateY(0);
-}
-
-.notes-surface :focus-visible {
-  outline: 3px solid var(--color-fd-ring);
-  outline-offset: 3px;
+.notes-search-fallback::backdrop {
+  background: var(--color-fd-overlay);
 }
 
 .notes-page-header {
@@ -152,17 +101,6 @@ body.notes-surface {
 
   .notes-page-actions > button {
     min-height: 2.75rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .notes-surface *,
-  .notes-surface *::before,
-  .notes-surface *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
   }
 }
 

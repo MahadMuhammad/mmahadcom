@@ -1,9 +1,7 @@
 @import "./tokens.css";
 @import "tailwindcss";
-@import "fumadocs-ui/css/neutral.css";
-@import "fumadocs-ui/css/preset.css";
 
-html.blog-surface {
+html:is(.blog-surface, .notes-surface) {
   --font-sans: var(--sans);
   --font-serif: var(--serif);
   --default-font-family: var(--sans);
@@ -30,11 +28,11 @@ html.blog-surface {
   font-family: var(--sans);
 }
 
-html.blog-surface.dark {
+html:is(.blog-surface, .notes-surface).dark {
   color-scheme: dark;
 }
 
-body.blog-surface {
+body:is(.blog-surface, .notes-surface) {
   min-height: 100vh;
   margin: 0;
   background: var(--color-fd-background);
@@ -43,13 +41,13 @@ body.blog-surface {
   text-rendering: optimizeLegibility;
 }
 
-.blog-surface :where(h1, h2, h3, h4, h5, h6) {
+:is(.blog-surface, .notes-surface) :where(h1, h2, h3, h4, h5, h6) {
   font-family: var(--serif);
   font-weight: 650;
   letter-spacing: -0.025em;
 }
 
-.blog-skip-link {
+:is(.blog-skip-link, .notes-skip-link) {
   position: fixed;
   z-index: 100;
   top: 0.75rem;
@@ -63,19 +61,19 @@ body.blog-surface {
   transition: transform 150ms ease;
 }
 
-.blog-skip-link:focus-visible {
+:is(.blog-skip-link, .notes-skip-link):focus-visible {
   transform: translateY(0);
 }
 
-.blog-surface :focus-visible {
+:is(.blog-surface, .notes-surface) :focus-visible {
   outline: 3px solid var(--color-fd-ring);
   outline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .blog-surface *,
-  .blog-surface *::before,
-  .blog-surface *::after {
+  :is(.blog-surface, .notes-surface) *,
+  :is(.blog-surface, .notes-surface) *::before,
+  :is(.blog-surface, .notes-surface) *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;

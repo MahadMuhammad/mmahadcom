@@ -74,9 +74,7 @@ jobs:
 
       - name: Check Blog templates with isolated synthetic articles
         if: matrix.node-version == '22'
-        run: |
-          npm run check:blog
-          npm run check:blog -- --theme light
+        run: npm run check:blog
 
       - name: Preserve verified production assets
         if: matrix.node-version == '22' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')

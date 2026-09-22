@@ -9,11 +9,12 @@ import { parseArgs } from "node:util";
 
 const { values: options } = parseArgs({
   options: {
-    theme: { type: "string", default: "dark" },
+    theme: { type: "string", default: "both" },
     screenshots: { type: "boolean", default: false },
   },
 });
-if (!["light", "dark"].includes(options.theme)) throw new Error("--theme must be light or dark.");
+if (!["light", "dark", "both"].includes(options.theme)) throw new Error("--theme must be light, dark, or both.");
+const themes = options.theme === "both" ? ["dark", "light"] : [options.theme];
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const fixtureRoot = await mkdtemp(join(tmpdir(), "mmahad-blog-qa-"));
 const copyOptions = { recursive: true, mode: constants.COPYFILE_FICLONE, verbatimSymlinks: true };
@@ -62,13 +63,14 @@ try {
   for (const output of ["blog/qa-blog-reader.md", "llms-full.txt"]) {
     assert.match(await readFile(join(fixtureRoot, "dist", output), "utf8"), /Published: 2000-01-02\n\nUpdated: 2000-01-03\n/);
   }
-  run("scripts/check-accessibility.mjs", [
-    "--routes",
-    "/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/,/notes/qa-authoring/",
-    "--theme",
-    options.theme,
-    ...(options.screenshots ? ["--screenshots"] : []),
-  ]);
+  for (const theme of themes)
+    run("scripts/check-accessibility.mjs", [
+      "--routes",
+      "/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/,/notes/qa-authoring/",
+      "--theme",
+      theme,
+      ...(options.screenshots ? ["--screenshots"] : []),
+    ]);
   await writeFile(
     join(fixtureContent, "duplicate.mdx"),
     "---\ntitle: Duplicate route\ndescription: Must fail instead of replacing another article\nslug: qa-blog-reader\npublishedAt: 2000-01-04\n---\n\nDuplicate article.\n"
