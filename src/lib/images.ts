@@ -12,12 +12,15 @@ export function getSourceImage(path: string) {
   return src;
 }
 
-export function getResponsiveImage(path: string) {
+export function getResponsiveImage(path: string, widths?: number[]) {
   const src = getSourceImage(path);
+  const candidates = [...new Set((widths ?? [480, 640, 960, 1280, 1920, src.width]).map((width) => Math.min(width, src.width)))].sort(
+    (a, b) => a - b
+  );
   return getImage({
     src,
-    width: Math.min(1280, src.width),
-    widths: [...new Set([480, 640, 960, 1280, 1920].filter((width) => width < src.width).concat(src.width))],
+    width: Math.min(1280, candidates.at(-1)!),
+    widths: candidates,
     format: "webp",
     quality: 90,
   });

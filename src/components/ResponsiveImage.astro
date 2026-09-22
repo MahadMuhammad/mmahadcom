@@ -5,10 +5,11 @@ import { getResponsiveImage } from "../lib/images";
 interface Props extends Omit<HTMLAttributes<"img">, "src" | "srcset" | "width" | "height"> {
   src: string;
   alt: string;
+  widths?: number[];
 }
 
-const { src, ...props } = Astro.props;
-const image = await getResponsiveImage(src);
+const { src, widths, ...props } = Astro.props;
+const image = await getResponsiveImage(src, widths);
 const attributes = { ...image.attributes, ...props, src: image.src, srcset: image.srcSet.attribute };
 ---
 
