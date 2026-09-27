@@ -2,9 +2,10 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ExternalLink from "../components/ExternalLink.astro";
 import HomeWriting from "../components/HomeWriting.astro";
+import NewsletterSignup from "../components/NewsletterSignup.astro";
 import ResponsiveImage from "../components/ResponsiveImage.astro";
 import { getRecentWriting } from "../lib/home-writing";
-import { about, pageDescriptions, site } from "../data/site";
+import { about, newsletter, pageDescriptions, site } from "../data/site";
 import "../styles/home.css";
 
 const writing = await getRecentWriting();
@@ -31,6 +32,7 @@ const projects = [
 ---
 
 <BaseLayout title="About" description={pageDescriptions.about} pageClass="page--home" footerVariant="home">
+  <link slot="head" rel="preconnect" href={newsletter.origin} />
   <div class="home-layout">
     <section class="home-introduction" aria-labelledby="home-title">
       <h1 id="home-title">
@@ -57,18 +59,21 @@ const projects = [
       </details>
     </section>
 
-    <figure class="home-portrait">
-      <ResponsiveImage
-        src={about.profileImage}
-        widths={[136, 176, 272, 352, 408, 528]}
-        sizes="(max-width: 640px) 136px, 176px"
-        alt="Muhammad Mahad beside a mountain lake"
-        loading="eager"
-        decoding="async"
-        fetchpriority="high"
-      />
-      <figcaption>Mahad, away from the keyboard.</figcaption>
-    </figure>
+    <aside class="home-sidebar" aria-label="Portrait and newsletter">
+      <figure class="home-portrait">
+        <ResponsiveImage
+          src={about.profileImage}
+          widths={[136, 176, 272, 352, 408, 528]}
+          sizes="(max-width: 900px) 136px, 176px"
+          alt="Muhammad Mahad beside a mountain lake"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
+        <figcaption>Mahad, away from the keyboard.</figcaption>
+      </figure>
+      <NewsletterSignup id="home-newsletter-title" className="home-newsletter" />
+    </aside>
 
     <HomeWriting entries={writing} />
 

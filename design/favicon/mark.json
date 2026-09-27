@@ -1,0 +1,21 @@
+{
+  "name": "Mahad crossed-stroke monogram",
+  "version": 1,
+  "viewBox": [0, 0, 32, 32],
+  "strokeWidth": 2.6,
+  "faviconStrokeWidth": 3.2,
+  "colors": {
+    "primary": "#4F46FF",
+    "darkSurface": "#C4C0FF",
+    "rasterFallback": "#8A7FFF",
+    "ink": "#262626",
+    "reverse": "#FFFFFF",
+    "touchBackground": "#F5F4F0"
+  },
+  "paths": [
+    "M12.4 6.8C11.8 14.5 9 21.2 4 26",
+    "M6 9.9C9.6 15.8 14.3 21.5 20 25.5",
+    "M23.2 6.2C21.9 13.9 17.3 20.8 10.9 25.9",
+    "M17.8 8.7C20.4 15.8 24 21.6 28 25.7"
+  ]
+}

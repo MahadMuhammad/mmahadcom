@@ -9,12 +9,14 @@ import { parseArgs } from "node:util";
 
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "playwright";
+import { parseFragment } from "parse5";
 
 const { values: options } = parseArgs({
   options: {
     routes: { type: "string" },
     theme: { type: "string", default: "dark" },
     screenshots: { type: "boolean", default: false },
+    "strict-embeds": { type: "boolean", default: false },
   },
 });
 if (!["light", "dark"].includes(options.theme)) throw new Error("--theme must be light or dark.");
@@ -677,11 +679,56 @@ async function saveScreenshot(page, scenario) {
   console.log(`Screenshot: ${path}`);
 }
 
+// These provider-owned defects were verified in Substack's native transparent embed.
+// Keep their report visible; all first-party nodes, other frames, rules and targets still fail.
+// --strict-embeds also makes these known findings blocking for a full provider audit.
+const knownSubstackTargets = {
+  "color-contrast": new Set([
+    ".color-pub-secondary-text-hGQ02T",
+    '.tos-text[rel="noopener"]:nth-child(1)',
+    '.tos-text[rel="noopener"]:nth-child(2)',
+    '.tos-text[rel="noopener"]:nth-child(3)',
+  ]),
+  "link-name": new Set(['.embed-page-inner > a[href$="mmahad.substack.com/"]']),
+};
+
+function isKnownSubstackFinding(violation, node, verifiedEmbed) {
+  if (!verifiedEmbed || node.target.length !== 2 || node.target[0] !== "iframe") return false;
+  if (violation.id === "frame-title" && ["iframe", 'iframe[width="0"]'].includes(node.target[1])) {
+    const frame = parseFragment(node.html ?? "").childNodes.find((element) => element.tagName === "iframe");
+    const source = frame?.attrs.find((attribute) => attribute.name === "src")?.value;
+    return source === "https://substack.com/session-attribution-frame";
+  }
+  return knownSubstackTargets[violation.id]?.has(node.target[1]) === true;
+}
+
+async function reportKnownSubstackFindings(page, scenario, violations) {
+  if (options["strict-embeds"]) return violations;
+  const frames = page.locator("iframe");
+  // Fail closed if the selector could identify another frame or a changed integration.
+  const verifiedEmbed =
+    (await frames.count()) === 1 &&
+    (await frames.getAttribute("src")) === "https://mmahad.substack.com/embed?transparent=1" &&
+    (await frames.evaluate((frame) => frame.parentElement?.matches("section.newsletter-signup"))) === true;
+  const blocking = [];
+  for (const violation of violations) {
+    const known = violation.nodes.filter((node) => isKnownSubstackFinding(violation, node, verifiedEmbed));
+    if (known.length > 0) {
+      console.warn(`Known Substack accessibility issue in ${scenario}: ${violation.id} (provider-owned; not fixed)`);
+      for (const node of known) console.warn(`  ${node.target.join(" ")}`);
+    }
+    const nodes = violation.nodes.filter((node) => !isKnownSubstackFinding(violation, node, verifiedEmbed));
+    if (nodes.length > 0) blocking.push({ ...violation, nodes });
+  }
+  return blocking;
+}
+
 async function auditPage(page, scenario, checkOverflow, failures, forbidOverflowConcealment = checkOverflow) {
   const failureCount = failures.length;
   const results = await new AxeBuilder({ page }).analyze();
-  if (results.violations.length > 0) {
-    failures.push({ kind: "axe", scenario, violations: results.violations });
+  const violations = await reportKnownSubstackFindings(page, scenario, results.violations);
+  if (violations.length > 0) {
+    failures.push({ kind: "axe", scenario, violations });
   }
 
   const cspViolations = await page.evaluate(() => globalThis.__cspViolations ?? []);

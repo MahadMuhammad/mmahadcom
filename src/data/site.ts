@@ -21,13 +21,21 @@ export const site = {
   sourceRepositoryPublic: sourceRepository.public,
   sourceRepositoryBranch: sourceRepository.branch,
   description: "Open-source enthusiast, scientist, engineer, teacher (in that order).",
-  favicon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🐸</text></svg>',
+  favicon: "/favicon.svg",
   socialImage: {
     src: "/images/mahad-profile.jpg",
     alt: "Muhammad Mahad standing beside a mountain lake",
     width: portrait.width,
     height: portrait.height,
   },
+} as const;
+
+export const newsletter = {
+  name: "Until It Makes Sense",
+  description: "experimenting, understanding, and explaining things from first principles",
+  origin: "https://mmahad.substack.com",
+  subscribeUrl: "https://mmahad.substack.com/subscribe",
+  embedUrl: "https://mmahad.substack.com/embed?transparent=1",
 } as const;
 
 export const pageDescriptions = {

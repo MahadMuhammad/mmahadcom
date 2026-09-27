@@ -42,7 +42,10 @@ const imageUrl = image?.toString();
 {description && <meta name="twitter:description" content={description} />}
 {imageUrl && <meta name="twitter:image" content={imageUrl} />}
 {imageAlt && <meta name="twitter:image:alt" content={imageAlt} />}
-<link rel="icon" type="image/svg+xml" href={site.favicon} />
+<link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16 32x32 48x48" />
+<link rel="icon" href="/favicon-96x96.png" type="image/png" sizes="96x96" />
+<link rel="icon" href={site.favicon} type="image/svg+xml" sizes="any" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
 <link rel="alternate" type="application/rss+xml" title="Blog RSS" href={new URL("/blog/rss.xml", site.url)} />
 <link rel="alternate" type="application/rss+xml" title="Notes RSS" href={new URL("/notes/rss.xml", site.url)} />
 {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}

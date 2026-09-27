@@ -1,14 +1,14 @@
 /* Homepage composition: all text sections share the first grid column. */
 .page--home .site-main {
-  width: min(100% - 2.5rem, 52.25rem);
+  width: min(100% - 2.5rem, 60rem);
   min-height: 0;
   padding-block: 3.875rem 4rem;
 }
 .home-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 11rem;
+  grid-template-columns: minmax(0, 1fr) 20rem;
   align-items: start;
-  gap: 3.25rem 4rem;
+  gap: 3.25rem 3rem;
 }
 .home-introduction,
 .home-writing,
@@ -45,9 +45,16 @@
   color: var(--link-hover);
   text-decoration-color: currentcolor;
 }
-.home-portrait {
+.home-sidebar {
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 1 / span 3;
+  min-width: 0;
+}
+.home-sidebar .newsletter-signup {
+  margin-top: 2rem;
+}
+.home-portrait {
+  width: 11rem;
   margin: 0.5rem 0 0;
 }
 .home-portrait img {
@@ -137,7 +144,7 @@
   padding-block: 0.4rem;
 }
 .site-footer--home .footer-content {
-  width: min(100% - 2.5rem, 52.25rem);
+  width: min(100% - 2.5rem, 60rem);
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -154,13 +161,7 @@
 .site-footer--home .footer-email {
   color: var(--link);
 }
-@media (max-width: 850px) {
-  .home-layout {
-    column-gap: 2rem;
-    grid-template-columns: minmax(0, 1fr) 9rem;
-  }
-}
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .page--home .site-main {
     padding-block: 2.25rem 2.5rem;
   }
@@ -168,6 +169,14 @@
     display: flex;
     flex-direction: column;
     gap: 2.25rem;
+  }
+  .home-sidebar {
+    display: contents;
+  }
+  .home-sidebar .newsletter-signup {
+    order: 2;
+    width: 100%;
+    margin: 0;
   }
   .home-portrait {
     width: 8.5rem;
@@ -181,11 +190,11 @@
     order: 1;
   }
   .home-writing {
-    order: 2;
+    order: 3;
     width: 100%;
   }
   .home-work {
-    order: 3;
+    order: 4;
     width: 100%;
   }
   .home-lead {

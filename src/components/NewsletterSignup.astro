@@ -1,0 +1,64 @@
+---
+import { newsletter } from "../data/site";
+interface Props {
+  id: string;
+  className?: string;
+}
+const { id, className } = Astro.props;
+---
+
+<section class:list={["newsletter-signup", className]} aria-labelledby={id}>
+  <h2 id={id}>Join my newsletter</h2>
+  <p class="newsletter-name">{newsletter.name}</p>
+  <p class="newsletter-description">{newsletter.description}</p>
+  <p class="newsletter-note">Hear about my experiments in my newsletter.</p>
+  <iframe
+    src={newsletter.embedUrl}
+    title={`Subscribe to ${newsletter.name} on Substack`}
+    width="480"
+    height="150"
+    loading="lazy"
+    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <p class="newsletter-fallback"><a href={newsletter.subscribeUrl}>Subscribe on Substack</a></p>
+</section>
+
+<style>
+  .newsletter-signup {
+    min-width: 0;
+    max-width: 36rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+  h2 {
+    font: 400 1.25rem/1.3 var(--serif);
+  }
+  .newsletter-name {
+    font: 400 1.125rem/1.4 var(--serif);
+    margin: 0.65rem 0;
+  }
+  .newsletter-description {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0.75rem 0;
+  }
+  .newsletter-note,
+  .newsletter-fallback {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0.75rem 0;
+  }
+  iframe {
+    display: block;
+    width: 100%;
+    max-width: 30rem;
+    height: 150px;
+    border: 0;
+    background: transparent;
+    color-scheme: normal;
+  }
+  .newsletter-fallback a {
+    display: inline-block;
+    padding-block: 0.5rem;
+  }
+</style>
