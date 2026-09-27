@@ -30,6 +30,14 @@ export const site = {
   },
 } as const;
 
+export const newsletter = {
+  name: "Until It Makes Sense",
+  description: "experimenting, understanding, and explaining things from first principles",
+  origin: "https://mmahad.substack.com",
+  subscribeUrl: "https://mmahad.substack.com/subscribe",
+  embedUrl: "https://mmahad.substack.com/embed?transparent=1",
+} as const;
+
 export const pageDescriptions = {
   about: site.description,
   openSource:

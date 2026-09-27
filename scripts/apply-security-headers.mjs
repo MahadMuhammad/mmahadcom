@@ -47,7 +47,7 @@ const contentSecurityPolicy = [
   "base-uri 'none'",
   "object-src 'none'",
   "frame-ancestors 'none'",
-  "frame-src 'none'",
+  "frame-src https://mmahad.substack.com",
   "form-action 'self'",
   "img-src 'self' data:",
   "font-src 'self' data:",

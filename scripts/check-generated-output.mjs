@@ -278,6 +278,31 @@ for (const [relativePath, expected] of [
   await assertOpenGraphMetadata(relativePath, expected);
 }
 
+// Keep the third-party signup confined to the two explicitly selected entry points.
+const signupPages = new Set(["index.html", "contact/index.html"]);
+for (const file of (await listFiles(outputDirectory)).filter((file) => file.endsWith(".html"))) {
+  const relativePath = path.relative(outputDirectory, file);
+  const html = await readFile(file, "utf8");
+  const document = parse(html);
+  const frames = [];
+  function collectFrames(node) {
+    if (node.tagName === "iframe") frames.push(Object.fromEntries(node.attrs.map(({ name, value }) => [name, value])));
+    for (const child of node.childNodes ?? []) collectFrames(child);
+  }
+  collectFrames(document);
+  const signupFrames = frames.filter((frame) => [frame.src, frame["data-src"]].some((url) => url?.includes("substack.com")));
+  assert.equal(signupFrames.length, signupPages.has(relativePath) ? 1 : 0, `${relativePath}: unexpected newsletter placement.`);
+  for (const frame of signupFrames) {
+    assert.equal(frame.src, "https://mmahad.substack.com/embed?transparent=1");
+    assert.ok(frame.title?.includes("Until It Makes Sense"), `${relativePath}: newsletter frame needs an accessible title.`);
+    assert.ok(html.includes('href="https://mmahad.substack.com/subscribe"'), `${relativePath}: signup needs a direct fallback link.`);
+  }
+}
+const generatedHeaders = await readFile(path.join(outputDirectory, "_headers"), "utf8");
+assert.match(generatedHeaders, /frame-src https:\/\/mmahad\.substack\.com;/, "Only the selected publication may be embedded.");
+assert.ok(generatedHeaders.includes("form-action 'self';"), "Embedding must not relax parent form submissions.");
+assert.ok(generatedHeaders.includes("connect-src 'self';"), "Embedding must not relax parent network access.");
+
 await assertFaviconMetadata();
 await assertFaviconAssets();
 await assertPrivateDataStaysServerSide();
