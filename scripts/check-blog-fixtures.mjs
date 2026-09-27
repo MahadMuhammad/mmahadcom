@@ -28,7 +28,17 @@ function run(script, args = []) {
 try {
   // A separate content root keeps synthetic posts out of the production collection and dist.
   // Copy dependencies rather than symlinking them: Astro resolves package paths from this root.
-  for (const input of ["src", "public", "scripts", "node_modules", "package.json", "package-lock.json", "astro.config.mjs", "tsconfig.json"]) {
+  for (const input of [
+    "src",
+    "public",
+    "design",
+    "scripts",
+    "node_modules",
+    "package.json",
+    "package-lock.json",
+    "astro.config.mjs",
+    "tsconfig.json",
+  ]) {
     await cp(join(projectRoot, input), join(fixtureRoot, input), copyOptions);
   }
   const fixtureContent = join(fixtureRoot, "src/content/blog/__qa");
@@ -51,6 +61,7 @@ try {
   const astroPackage = JSON.parse(await readFile(join(fixtureRoot, "node_modules/astro/package.json"), "utf8"));
   run(join("node_modules/astro", astroPackage.bin.astro), ["build"]);
   run("scripts/apply-security-headers.mjs");
+  run("scripts/check-generated-output.mjs");
   run("scripts/check-llms.mjs");
   run("scripts/check-links.mjs");
   const noteMarkdown = await readFile(join(fixtureRoot, "dist/notes/qa-authoring.md"), "utf8");
