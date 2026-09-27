@@ -285,8 +285,10 @@ for (const file of (await listFiles(outputDirectory)).filter((file) => file.ends
   const html = await readFile(file, "utf8");
   const document = parse(html);
   const frames = [];
+  const links = [];
   function collectFrames(node) {
     if (node.tagName === "iframe") frames.push(Object.fromEntries(node.attrs.map(({ name, value }) => [name, value])));
+    if (node.tagName === "a") links.push(Object.fromEntries(node.attrs.map(({ name, value }) => [name, value])));
     for (const child of node.childNodes ?? []) collectFrames(child);
   }
   collectFrames(document);
@@ -294,6 +296,13 @@ for (const file of (await listFiles(outputDirectory)).filter((file) => file.ends
   assert.equal(signupFrames.length, signupPages.has(relativePath) ? 1 : 0, `${relativePath}: unexpected newsletter placement.`);
   for (const frame of signupFrames) {
     assert.equal(frame.src, "https://mmahad.substack.com/embed?transparent=1");
+    assert.equal(frame.loading, "eager", `${relativePath}: signup must start loading without waiting for scrolling.`);
+    assert.ok(frame.name && !frame.name.startsWith("_"), `${relativePath}: signup needs a named frame for manual recovery.`);
+    assert.equal(frames.filter((other) => other.name === frame.name).length, 1, `${relativePath}: signup frame names must be unique.`);
+    assert.ok(
+      links.some((link) => link.href === frame.src && link.target === frame.name),
+      `${relativePath}: reloading the signup must target its frame, not the whole page or a new tab.`
+    );
     assert.ok(frame.title?.includes("Until It Makes Sense"), `${relativePath}: newsletter frame needs an accessible title.`);
     assert.ok(html.includes('href="https://mmahad.substack.com/subscribe"'), `${relativePath}: signup needs a direct fallback link.`);
   }
