@@ -5,7 +5,6 @@ interface Props {
   className?: string;
 }
 const { id, className } = Astro.props;
-const frameName = `${id}-form`;
 ---
 
 <section class:list={["newsletter-signup", className]} aria-labelledby={id}>
@@ -15,15 +14,12 @@ const frameName = `${id}-form`;
   <p class="newsletter-note">Hear about my experiments in my newsletter.</p>
   <iframe
     src={newsletter.embedUrl}
-    name={frameName}
     title={`Subscribe to ${newsletter.name} on Substack`}
     width="480"
     height="150"
     loading="eager"
     referrerpolicy="strict-origin-when-cross-origin"></iframe>
-  <p class="newsletter-fallback">
-    <a href={newsletter.embedUrl} target={frameName}>Reload form</a> · <a href={newsletter.subscribeUrl}>Subscribe on Substack</a>
-  </p>
+  <p class="newsletter-fallback"><a href={newsletter.subscribeUrl}>Subscribe on Substack</a></p>
 </section>
 
 <style>

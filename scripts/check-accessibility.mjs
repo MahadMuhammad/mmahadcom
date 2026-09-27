@@ -223,33 +223,10 @@ async function checkNewsletter(page, scenario) {
   }
   await requireUsableEmail();
 
-  const tabsBefore = page.context().pages().length;
-  let parentNavigated = false;
-  const onNavigation = (navigated) => {
-    if (navigated === page.mainFrame()) parentNavigated = true;
-  };
-  page.on("framenavigated", onNavigation);
-  try {
-    const embedUrl = await frameElement.getAttribute("src");
-    const retry = section.getByRole("link", { name: "Reload form", exact: true });
-    // Deliberately fail one navigation, then verify the reader can recover using the link.
-    await page.route(embedUrl, (request) => request.abort(), { times: 1 });
-    await Promise.all([
-      page.waitForEvent("requestfailed", { predicate: (request) => request.url() === embedUrl, timeout: 30000 }),
-      page.waitForEvent("framenavigated", { predicate: (navigated) => navigated === frame, timeout: 30000 }),
-      retry.click(),
-    ]);
-    await Promise.all([page.waitForEvent("framenavigated", { predicate: (navigated) => navigated === frame, timeout: 30000 }), retry.press("Enter")]);
-    await requireUsableEmail();
-    assert.equal(parentNavigated, false, "Retry must not reload the host page.");
-    assert.equal(page.context().pages().length, tabsBefore, "Retry must not open another tab.");
-    await frameElement.scrollIntoViewIfNeeded();
-    await requireUsableEmail();
-    if (options.screenshots) await saveScreenshot(page, `${scenario} Newsletter ready`, false);
-    console.log(`Newsletter input and manual retry passed: ${scenario}`);
-  } finally {
-    page.off("framenavigated", onNavigation);
-  }
+  await frameElement.scrollIntoViewIfNeeded();
+  await requireUsableEmail();
+  if (options.screenshots) await saveScreenshot(page, `${scenario} Newsletter ready`, false);
+  console.log(`Newsletter input passed: ${scenario}`);
 }
 
 async function checkSharedHeader(page, viewport) {
