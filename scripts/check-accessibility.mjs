@@ -221,8 +221,7 @@ async function checkNewsletter(page, scenario) {
       });
     assert.ok(await email.isEditable(), "The newsletter email field must accept input.");
   }
-  await requireUsableEmail();
-
+  // Scroll the host page, not the frame contents, before checking what a reader can see.
   await frameElement.scrollIntoViewIfNeeded();
   await requireUsableEmail();
   if (options.screenshots) await saveScreenshot(page, `${scenario} Newsletter ready`, false);
