@@ -17,6 +17,7 @@ const { values: options } = parseArgs({
     theme: { type: "string", default: "dark" },
     screenshots: { type: "boolean", default: false },
     "strict-embeds": { type: "boolean", default: false },
+    "require-newsletter": { type: "boolean", default: false },
   },
 });
 if (!["light", "dark"].includes(options.theme)) throw new Error("--theme must be light or dark.");
@@ -178,7 +179,7 @@ async function preparePage(context) {
 }
 
 async function loadRoute(page, baseUrl, route) {
-  const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "load" });
+  const response = await page.goto(`${baseUrl}${route}`, { waitUntil: options["require-newsletter"] ? "domcontentloaded" : "load" });
   if (!response) throw new Error(`No main-document response received for ${route}.`);
   // Wait for interactive islands, rather than a fixed period of network silence.
   await page.waitForFunction(() => !document.querySelector('astro-island[client="load"][ssr]'));
@@ -186,6 +187,68 @@ async function loadRoute(page, baseUrl, route) {
   const servedPolicy = await response.headerValue("content-security-policy");
   if (servedPolicy !== contentSecurityPolicy) {
     throw new Error(`Generated Content-Security-Policy was not served for ${route}.`);
+  }
+}
+
+// Opt in when checking the live provider: a successful host page is not proof that its email field loaded.
+async function checkNewsletter(page, scenario) {
+  const section = page.locator(".newsletter-signup");
+  if (!(await section.count())) return;
+  const frameElement = section.locator("iframe");
+  const frame = await (await frameElement.elementHandle()).contentFrame();
+  assert.ok(frame, "The newsletter must have an embedded browsing context.");
+  const email = frame.getByRole("textbox", { name: "Email", exact: true });
+  async function requireUsableEmail() {
+    await email.waitFor({ state: "visible", timeout: 30000 });
+    await frame
+      .waitForFunction(
+        () => {
+          const input = document.querySelector('input[type="email"]');
+          if (!input) return false;
+          const rect = input.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0 && rect.bottom <= innerHeight && rect.right <= innerWidth;
+        },
+        null,
+        // Offscreen iframe animation frames can be suspended before the reader scrolls.
+        { timeout: 30000, polling: 100 }
+      )
+      .catch(async (error) => {
+        const bounds = await email.evaluate((input) => {
+          const rect = input.getBoundingClientRect();
+          return { input: rect.toJSON(), viewport: { width: innerWidth, height: innerHeight }, scroll: { x: scrollX, y: scrollY } };
+        });
+        throw new Error(`Newsletter input is clipped: ${JSON.stringify(bounds)}`, { cause: error });
+      });
+    assert.ok(await email.isEditable(), "The newsletter email field must accept input.");
+  }
+  await requireUsableEmail();
+
+  const tabsBefore = page.context().pages().length;
+  let parentNavigated = false;
+  const onNavigation = (navigated) => {
+    if (navigated === page.mainFrame()) parentNavigated = true;
+  };
+  page.on("framenavigated", onNavigation);
+  try {
+    const embedUrl = await frameElement.getAttribute("src");
+    const retry = section.getByRole("link", { name: "Reload form", exact: true });
+    // Deliberately fail one navigation, then verify the reader can recover using the link.
+    await page.route(embedUrl, (request) => request.abort(), { times: 1 });
+    await Promise.all([
+      page.waitForEvent("requestfailed", { predicate: (request) => request.url() === embedUrl, timeout: 30000 }),
+      page.waitForEvent("framenavigated", { predicate: (navigated) => navigated === frame, timeout: 30000 }),
+      retry.click(),
+    ]);
+    await Promise.all([page.waitForEvent("framenavigated", { predicate: (navigated) => navigated === frame, timeout: 30000 }), retry.press("Enter")]);
+    await requireUsableEmail();
+    assert.equal(parentNavigated, false, "Retry must not reload the host page.");
+    assert.equal(page.context().pages().length, tabsBefore, "Retry must not open another tab.");
+    await frameElement.scrollIntoViewIfNeeded();
+    await requireUsableEmail();
+    if (options.screenshots) await saveScreenshot(page, `${scenario} Newsletter ready`, false);
+    console.log(`Newsletter input and manual retry passed: ${scenario}`);
+  } finally {
+    page.off("framenavigated", onNavigation);
   }
 }
 
@@ -671,11 +734,11 @@ async function checkBlogReading(page, viewport) {
   await page.emulateMedia({ reducedMotion: "no-preference" });
 }
 
-async function saveScreenshot(page, scenario) {
+async function saveScreenshot(page, scenario, fullPage = true) {
   await mkdir(screenshotDirectory, { recursive: true });
   const filename = `${scenario.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home"}.png`;
   const path = join(screenshotDirectory, filename);
-  await page.screenshot({ path, fullPage: true });
+  await page.screenshot({ path, fullPage });
   console.log(`Screenshot: ${path}`);
 }
 
@@ -1201,6 +1264,7 @@ try {
 
         try {
           await loadRoute(page, baseUrl, route);
+          if (options["require-newsletter"]) await checkNewsletter(page, scenario);
           await auditPage(page, scenario, viewport.width === 320, failures);
           await checkSharedHeader(page, viewport);
           await checkBlogFilters(page, baseUrl);
