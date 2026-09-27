@@ -12,14 +12,14 @@ const { id, className } = Astro.props;
   <p class="newsletter-name">{newsletter.name}</p>
   <p class="newsletter-description">{newsletter.description}</p>
   <p class="newsletter-note">Hear about my experiments in my newsletter.</p>
-  <iframe
-    src={newsletter.embedUrl}
-    title={`Subscribe to ${newsletter.name} on Substack`}
-    width="480"
-    height="150"
-    loading="eager"
-    referrerpolicy="strict-origin-when-cross-origin"></iframe>
-  <p class="newsletter-fallback"><a href={newsletter.subscribeUrl}>Subscribe on Substack</a></p>
+  <form action={newsletter.subscribeUrl} method="get" aria-describedby={`${id}-handoff`}>
+    <label for={`${id}-email`}>Email address</label>
+    <div class="newsletter-fields">
+      <input id={`${id}-email`} name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required />
+      <button type="submit">Continue</button>
+    </div>
+  </form>
+  <p class="newsletter-handoff" id={`${id}-handoff`}>Confirm your subscription on <a href={newsletter.subscribeUrl}>Substack</a>.</p>
 </section>
 
 <style>
@@ -42,23 +42,51 @@ const { id, className } = Astro.props;
     margin: 0.75rem 0;
   }
   .newsletter-note,
-  .newsletter-fallback {
+  .newsletter-handoff {
     font-size: 0.8125rem;
     line-height: 1.6;
     color: var(--muted);
     margin: 0.75rem 0;
   }
-  iframe {
-    display: block;
-    width: 100%;
-    max-width: 30rem;
-    height: 150px;
-    border: 0;
-    background: transparent;
-    color-scheme: normal;
+  form {
+    margin-top: 1.25rem;
   }
-  .newsletter-fallback a {
-    display: inline-block;
-    padding-block: 0.5rem;
+  label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.875rem;
+  }
+  .newsletter-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    max-width: 30rem;
+  }
+  input,
+  button {
+    min-height: 44px;
+    border-radius: var(--radius);
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  input {
+    min-width: 0;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--faint);
+    background: var(--canvas);
+    color: var(--ink);
+  }
+  button {
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--canvas);
+    cursor: pointer;
+  }
+  button:hover {
+    background: var(--muted);
+    border-color: var(--muted);
   }
 </style>

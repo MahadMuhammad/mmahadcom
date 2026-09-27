@@ -5,7 +5,7 @@ import HomeWriting from "../components/HomeWriting.astro";
 import NewsletterSignup from "../components/NewsletterSignup.astro";
 import ResponsiveImage from "../components/ResponsiveImage.astro";
 import { getRecentWriting } from "../lib/home-writing";
-import { about, newsletter, pageDescriptions, site } from "../data/site";
+import { about, pageDescriptions, site } from "../data/site";
 import "../styles/home.css";
 
 const writing = await getRecentWriting();
@@ -32,7 +32,6 @@ const projects = [
 ---
 
 <BaseLayout title="About" description={pageDescriptions.about} pageClass="page--home" footerVariant="home">
-  <link slot="head" rel="preconnect" href={newsletter.origin} />
   <div class="home-layout">
     <section class="home-introduction" aria-labelledby="home-title">
       <h1 id="home-title">

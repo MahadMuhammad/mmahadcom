@@ -4,11 +4,10 @@ import ContactIcon from "../components/ContactIcon.astro";
 import ExternalLink from "../components/ExternalLink.astro";
 import PageHero from "../components/PageHero.astro";
 import NewsletterSignup from "../components/NewsletterSignup.astro";
-import { contactChannels, newsletter, pageDescriptions } from "../data/site";
+import { contactChannels, pageDescriptions } from "../data/site";
 ---
 
 <BaseLayout title="Contact" description={pageDescriptions.contact} pageClass="page--contact" footerVariant="compact">
-  <link slot="head" rel="preconnect" href={newsletter.origin} />
   <PageHero
     title={{ english: "Contact", urdu: "رابطے" }}
     lead="Feel free to reach out to me through any of the following channels. I'm always open to discussing open-source projects, collaboration opportunities, or answering questions."

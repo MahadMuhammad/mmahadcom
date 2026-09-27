@@ -278,31 +278,46 @@ for (const [relativePath, expected] of [
   await assertOpenGraphMetadata(relativePath, expected);
 }
 
-// Keep the third-party signup confined to the two explicitly selected entry points.
+// The email field must ship in HTML, without depending on a provider frame or scripts.
 const signupPages = new Set(["index.html", "contact/index.html"]);
 for (const file of (await listFiles(outputDirectory)).filter((file) => file.endsWith(".html"))) {
   const relativePath = path.relative(outputDirectory, file);
   const html = await readFile(file, "utf8");
   const document = parse(html);
-  const frames = [];
-  function collectFrames(node) {
-    if (node.tagName === "iframe") frames.push(Object.fromEntries(node.attrs.map(({ name, value }) => [name, value])));
-    for (const child of node.childNodes ?? []) collectFrames(child);
+  const elements = [];
+  function collectElements(node) {
+    if (node.tagName) elements.push({ tag: node.tagName, ...Object.fromEntries(node.attrs.map(({ name, value }) => [name, value])) });
+    for (const child of node.childNodes ?? []) collectElements(child);
   }
-  collectFrames(document);
-  const signupFrames = frames.filter((frame) => [frame.src, frame["data-src"]].some((url) => url?.includes("substack.com")));
-  assert.equal(signupFrames.length, signupPages.has(relativePath) ? 1 : 0, `${relativePath}: unexpected newsletter placement.`);
-  for (const frame of signupFrames) {
-    assert.equal(frame.src, "https://mmahad.substack.com/embed?transparent=1");
-    assert.equal(frame.loading, "eager", `${relativePath}: signup must start loading without waiting for scrolling.`);
-    assert.ok(frame.title?.includes("Until It Makes Sense"), `${relativePath}: newsletter frame needs an accessible title.`);
-    assert.ok(html.includes('href="https://mmahad.substack.com/subscribe"'), `${relativePath}: signup needs a direct fallback link.`);
+  collectElements(document);
+  const forms = elements.filter((element) => element.tag === "form" && element.action?.includes("substack.com"));
+  assert.equal(forms.length, signupPages.has(relativePath) ? 1 : 0, `${relativePath}: unexpected newsletter placement.`);
+  assert.ok(
+    !elements.some((element) => element.tag === "iframe" && element.src?.includes("substack.com")),
+    `${relativePath}: signup must not depend on an iframe.`
+  );
+  for (const form of forms) {
+    assert.equal(form.action, "https://mmahad.substack.com/subscribe");
+    assert.equal(form.method, "get");
+    const email = elements.find((element) => element.tag === "input" && element.name === "email");
+    assert.equal(email?.type, "email");
+    assert.equal(email.required, "");
+    assert.equal(email.autocomplete, "email");
+    assert.ok(
+      elements.some((element) => element.tag === "label" && element.for === email.id),
+      `${relativePath}: email needs a visible label.`
+    );
+    assert.ok(
+      elements.some((element) => element.id === form["aria-describedby"]),
+      `${relativePath}: describe the Substack confirmation step.`
+    );
+    assert.ok(html.includes('href="https://mmahad.substack.com/subscribe"'), `${relativePath}: retain a direct Substack link.`);
   }
 }
 const generatedHeaders = await readFile(path.join(outputDirectory, "_headers"), "utf8");
-assert.match(generatedHeaders, /frame-src https:\/\/mmahad\.substack\.com;/, "Only the selected publication may be embedded.");
-assert.ok(generatedHeaders.includes("form-action 'self';"), "Embedding must not relax parent form submissions.");
-assert.ok(generatedHeaders.includes("connect-src 'self';"), "Embedding must not relax parent network access.");
+assert.ok(generatedHeaders.includes("frame-src 'none';"), "No external signup frame is needed.");
+assert.ok(generatedHeaders.includes("form-action 'self' https://mmahad.substack.com;"), "Only the selected publication may receive the signup form.");
+assert.ok(generatedHeaders.includes("connect-src 'self';"), "Signup must not require client-side API access.");
 
 await assertFaviconMetadata();
 await assertFaviconAssets();

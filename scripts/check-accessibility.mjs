@@ -9,15 +9,12 @@ import { parseArgs } from "node:util";
 
 import AxeBuilder from "@axe-core/playwright";
 import { chromium } from "playwright";
-import { parseFragment } from "parse5";
 
 const { values: options } = parseArgs({
   options: {
     routes: { type: "string" },
     theme: { type: "string", default: "dark" },
     screenshots: { type: "boolean", default: false },
-    "strict-embeds": { type: "boolean", default: false },
-    "require-newsletter": { type: "boolean", default: false },
   },
 });
 if (!["light", "dark"].includes(options.theme)) throw new Error("--theme must be light or dark.");
@@ -179,7 +176,7 @@ async function preparePage(context) {
 }
 
 async function loadRoute(page, baseUrl, route) {
-  const response = await page.goto(`${baseUrl}${route}`, { waitUntil: options["require-newsletter"] ? "domcontentloaded" : "load" });
+  const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "load" });
   if (!response) throw new Error(`No main-document response received for ${route}.`);
   // Wait for interactive islands, rather than a fixed period of network silence.
   await page.waitForFunction(() => !document.querySelector('astro-island[client="load"][ssr]'));
@@ -190,42 +187,62 @@ async function loadRoute(page, baseUrl, route) {
   }
 }
 
-// Opt in when checking the live provider: a successful host page is not proof that its email field loaded.
 async function checkNewsletter(page, scenario) {
   const section = page.locator(".newsletter-signup");
   if (!(await section.count())) return;
-  const frameElement = section.locator("iframe");
-  const frame = await (await frameElement.elementHandle()).contentFrame();
-  assert.ok(frame, "The newsletter must have an embedded browsing context.");
-  const email = frame.getByRole("textbox", { name: "Email", exact: true });
-  async function requireUsableEmail() {
-    await email.waitFor({ state: "visible", timeout: 30000 });
-    await frame
-      .waitForFunction(
-        () => {
-          const input = document.querySelector('input[type="email"]');
-          if (!input) return false;
-          const rect = input.getBoundingClientRect();
-          return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.left >= 0 && rect.bottom <= innerHeight && rect.right <= innerWidth;
-        },
-        null,
-        // Offscreen iframe animation frames can be suspended before the reader scrolls.
-        { timeout: 30000, polling: 100 }
-      )
-      .catch(async (error) => {
-        const bounds = await email.evaluate((input) => {
-          const rect = input.getBoundingClientRect();
-          return { input: rect.toJSON(), viewport: { width: innerWidth, height: innerHeight }, scroll: { x: scrollX, y: scrollY } };
-        });
-        throw new Error(`Newsletter input is clipped: ${JSON.stringify(bounds)}`, { cause: error });
-      });
-    assert.ok(await email.isEditable(), "The newsletter email field must accept input.");
-  }
-  // Scroll the host page, not the frame contents, before checking what a reader can see.
-  await frameElement.scrollIntoViewIfNeeded();
-  await requireUsableEmail();
+  const email = section.getByRole("textbox", { name: "Email address", exact: true });
+  await email.scrollIntoViewIfNeeded();
+  assert.ok(await email.isVisible(), "The newsletter email field must be visible.");
+  assert.ok(await email.isEditable(), "The newsletter email field must accept input.");
+  await email.focus();
+  await page.keyboard.press("Tab");
+  assert.ok(await section.getByRole("button", { name: "Continue", exact: true }).evaluate((button) => document.activeElement === button));
   if (options.screenshots) await saveScreenshot(page, `${scenario} Newsletter ready`, false);
-  console.log(`Newsletter input passed: ${scenario}`);
+}
+
+async function checkNewsletterWithoutProvider(browser, baseUrl, route) {
+  // The field and native validation must work with no JS and no provider resources.
+  // Capture the final navigation locally; never submit a real subscription in this test.
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 900 } });
+  const providerRequests = [];
+  await context.route("**/*", async (requestRoute) => {
+    const request = requestRoute.request();
+    const url = new URL(request.url());
+    const provider = ["substack.com", "substackcdn.com"].some((domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`));
+    if (!provider) return requestRoute.continue();
+    providerRequests.push({ url: request.url(), method: request.method() });
+    if (url.origin === "https://mmahad.substack.com" && url.pathname === "/subscribe") {
+      return requestRoute.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>Signup handoff captured</title>" });
+    }
+    return requestRoute.abort();
+  });
+  try {
+    const page = await context.newPage();
+    const startUrl = `${baseUrl}${route}`;
+    await page.goto(startUrl, { waitUntil: "load" });
+    const section = page.locator(".newsletter-signup");
+    const email = section.getByRole("textbox", { name: "Email address", exact: true });
+    const button = section.getByRole("button", { name: "Continue", exact: true });
+    await button.click();
+    assert.ok(await email.evaluate((input) => input.validity.valueMissing), "An empty email must not leave the site.");
+    await email.fill("not-an-email");
+    await button.click();
+    assert.ok(await email.evaluate((input) => input.validity.typeMismatch), "An invalid email must not leave the site.");
+    assert.equal(page.url(), startUrl);
+    assert.deepEqual(providerRequests, [], "Rendering or invalid input must not contact Substack.");
+    const address = "newsletter+check@example.invalid";
+    await email.fill(address);
+    await Promise.all([
+      page.waitForURL((url) => url.origin === "https://mmahad.substack.com" && url.pathname === "/subscribe"),
+      email.press("Enter"),
+    ]);
+    assert.equal(providerRequests.length, 1, "Only the requested signup handoff should contact Substack.");
+    assert.equal(providerRequests[0].method, "GET");
+    assert.deepEqual([...new URL(providerRequests[0].url).searchParams], [["email", address]], "Preserve the email, including plus addressing.");
+    console.log(`Newsletter without JavaScript or provider resources passed: ${route}`);
+  } finally {
+    await context.close();
+  }
 }
 
 async function checkSharedHeader(page, viewport) {
@@ -718,54 +735,10 @@ async function saveScreenshot(page, scenario, fullPage = true) {
   console.log(`Screenshot: ${path}`);
 }
 
-// These provider-owned defects were verified in Substack's native transparent embed.
-// Keep their report visible; all first-party nodes, other frames, rules and targets still fail.
-// --strict-embeds also makes these known findings blocking for a full provider audit.
-const knownSubstackTargets = {
-  "color-contrast": new Set([
-    ".color-pub-secondary-text-hGQ02T",
-    '.tos-text[rel="noopener"]:nth-child(1)',
-    '.tos-text[rel="noopener"]:nth-child(2)',
-    '.tos-text[rel="noopener"]:nth-child(3)',
-  ]),
-  "link-name": new Set(['.embed-page-inner > a[href$="mmahad.substack.com/"]']),
-};
-
-function isKnownSubstackFinding(violation, node, verifiedEmbed) {
-  if (!verifiedEmbed || node.target.length !== 2 || node.target[0] !== "iframe") return false;
-  if (violation.id === "frame-title" && ["iframe", 'iframe[width="0"]'].includes(node.target[1])) {
-    const frame = parseFragment(node.html ?? "").childNodes.find((element) => element.tagName === "iframe");
-    const source = frame?.attrs.find((attribute) => attribute.name === "src")?.value;
-    return source === "https://substack.com/session-attribution-frame";
-  }
-  return knownSubstackTargets[violation.id]?.has(node.target[1]) === true;
-}
-
-async function reportKnownSubstackFindings(page, scenario, violations) {
-  if (options["strict-embeds"]) return violations;
-  const frames = page.locator("iframe");
-  // Fail closed if the selector could identify another frame or a changed integration.
-  const verifiedEmbed =
-    (await frames.count()) === 1 &&
-    (await frames.getAttribute("src")) === "https://mmahad.substack.com/embed?transparent=1" &&
-    (await frames.evaluate((frame) => frame.parentElement?.matches("section.newsletter-signup"))) === true;
-  const blocking = [];
-  for (const violation of violations) {
-    const known = violation.nodes.filter((node) => isKnownSubstackFinding(violation, node, verifiedEmbed));
-    if (known.length > 0) {
-      console.warn(`Known Substack accessibility issue in ${scenario}: ${violation.id} (provider-owned; not fixed)`);
-      for (const node of known) console.warn(`  ${node.target.join(" ")}`);
-    }
-    const nodes = violation.nodes.filter((node) => !isKnownSubstackFinding(violation, node, verifiedEmbed));
-    if (nodes.length > 0) blocking.push({ ...violation, nodes });
-  }
-  return blocking;
-}
-
 async function auditPage(page, scenario, checkOverflow, failures, forbidOverflowConcealment = checkOverflow) {
   const failureCount = failures.length;
   const results = await new AxeBuilder({ page }).analyze();
-  const violations = await reportKnownSubstackFindings(page, scenario, results.violations);
+  const violations = results.violations;
   if (violations.length > 0) {
     failures.push({ kind: "axe", scenario, violations });
   }
@@ -1240,7 +1213,7 @@ try {
 
         try {
           await loadRoute(page, baseUrl, route);
-          if (options["require-newsletter"]) await checkNewsletter(page, scenario);
+          await checkNewsletter(page, scenario);
           await auditPage(page, scenario, viewport.width === 320, failures);
           await checkSharedHeader(page, viewport);
           await checkBlogFilters(page, baseUrl);
@@ -1302,6 +1275,9 @@ try {
       for (const failure of ["chunk", "dependency", "index"]) await checkSearchFailureRecovery(browser, baseUrl, failure, viewport);
     }
     await checkNotesTocPopover(browser, baseUrl);
+  }
+  for (const route of ["/", "/contact/"]) {
+    if (includesRoute(route)) await checkNewsletterWithoutProvider(browser, baseUrl, route);
   }
   if (includesRoute("/")) await checkLandscapeNavigation(browser, baseUrl);
   if (includesRoute("/volunteering/hacktoberfest-lahore-2025/")) await checkLightboxKeyboard(browser, baseUrl);
