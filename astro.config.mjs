@@ -5,6 +5,7 @@ import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import { serializeSitemapPage } from "./scripts/sitemap.mjs";
 import { sourceImages } from "./scripts/source-images.mjs";
+import { buildSecurityDeadline } from "./scripts/build-security-deadline.mjs";
 import tailwindcss from "@tailwindcss/vite";
 import { unified } from "@astrojs/markdown-remark";
 import { rehypeCode, remarkCodeTab, remarkHeading, remarkNpm, remarkStructure } from "fumadocs-core/mdx-plugins";
@@ -44,6 +45,7 @@ export default defineConfig({
       extendMarkdownConfig: true,
       syntaxHighlight: false,
     }),
+    buildSecurityDeadline(),
   ],
   vite: {
     plugins: [tailwindcss()],

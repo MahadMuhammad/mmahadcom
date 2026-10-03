@@ -248,7 +248,7 @@ async function assertFaviconAssets() {
   }
 }
 
-const defaultImage = "https://www.mmahad.com/images/mahad-profile.jpg";
+const defaultImage = "https://www.mmahad.com/images/mahad-southeast-asia.jpg";
 
 for (const relativePath of [
   "404.html",

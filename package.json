@@ -13,7 +13,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
-    "postbuild": "node scripts/apply-security-headers.mjs && npm run check:generated && npm run check:llms && npm run check:links",
+    "postbuild": "node scripts/apply-security-headers.mjs && npm run check:generated && npm run check:llms && npm run check:links && node scripts/check-static-output.mjs",
     "check": "astro check",
     "check:a11y": "node scripts/check-accessibility.mjs",
     "check:blog": "node scripts/check-blog-fixtures.mjs",
