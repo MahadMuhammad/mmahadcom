@@ -52,7 +52,8 @@ jobs:
 
       - name: Audit dependencies before running their code
         run: |
-          npm audit
+          node --test scripts/security-checks.test.mjs
+          node scripts/audit-dependencies.mjs
           npm audit signatures
 
       - name: Run approved dependency install scripts
@@ -62,7 +63,9 @@ jobs:
         run: npm run format:check
 
       - name: Verify production build and links
-        run: npm run verify
+        run: |
+          npm run verify
+          node scripts/check-static-output.mjs
 
       - name: Install Chromium for accessibility checks
         if: matrix.node-version == '22'
@@ -153,6 +156,7 @@ jobs:
           CLOUDFLARE_PROJECT_NAME: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           WRANGLER_SEND_METRICS: "false"
         run: |
+          node --input-type=module -e 'if (Date.now() >= Date.parse("2026-10-11T00:00:00Z")) throw new Error("Temporary dependency exception expired; do not deploy these assets.")'
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           test -n "$CLOUDFLARE_PROJECT_NAME"
