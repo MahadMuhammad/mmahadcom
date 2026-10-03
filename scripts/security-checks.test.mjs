@@ -7,6 +7,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { advisory, assertReviewedInputs, evaluateAudit, expires, ignoredRootEntries, reviewedVersions } from "./audit-dependencies.mjs";
 import { assertStaticOutput } from "./check-static-output.mjs";
+import { assertBuildDeadline, buildSecurityDeadline } from "./build-security-deadline.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const now = Date.parse("2026-10-04T00:00:00Z");
@@ -167,4 +168,12 @@ test("rejects executable/server output, symlinks, unresolved CSP and bundled cac
   } finally {
     await rm(isolated, { recursive: true, force: true });
   }
+});
+
+// Exercise the same callback Astro awaits, without running third-party code before the audit.
+test("direct Astro builds reject the deadline even without npm lifecycle hooks", (context) => {
+  assert.doesNotThrow(() => assertBuildDeadline(expires - 1));
+  for (const timestamp of [expires, expires + 1, Number.NaN]) assert.throws(() => assertBuildDeadline(timestamp), /exception expired/);
+  context.mock.method(Date, "now", () => expires);
+  assert.throws(() => buildSecurityDeadline().hooks["astro:build:done"](), /exception expired/);
 });
