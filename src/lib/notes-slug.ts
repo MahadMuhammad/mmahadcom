@@ -1,7 +1,6 @@
 import type { CollectionEntry } from "astro:content";
 
 const notesContentDirectory = "src/content/notes/";
-const contentExtension = /\.(?:md|mdx)$/i;
 
 type ContentEntryLocation = Pick<CollectionEntry<"notes">, "filePath" | "id">;
 
@@ -20,19 +19,6 @@ export function getNotesRelativePath(entry: ContentEntryLocation): string {
   const relative = markerIndex === -1 ? source : source.slice(markerIndex + notesContentDirectory.length);
 
   return relative.replace(/^\/+/, "");
-}
-
-export function getNoteSlugs(entry: ContentEntryLocation): string[] {
-  const relative = getNotesRelativePath(entry).replace(contentExtension, "");
-  const segments = relative.split("/").filter(Boolean);
-
-  return segments.at(-1) === "index" ? segments.slice(0, -1) : segments;
-}
-
-export function getNotePath(entry: ContentEntryLocation): string {
-  const slugs = getNoteSlugs(entry);
-
-  return slugs.length === 0 ? "/notes/" : `/notes/${slugs.map(encodeURIComponent).join("/")}/`;
 }
 
 function encodeAnchorSignature(value: string): string {

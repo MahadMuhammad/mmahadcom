@@ -264,7 +264,7 @@ async function checkSharedHeader(page, viewport) {
   await toggle.click();
   await page.waitForFunction((theme) => document.documentElement.dataset.theme === theme, initial);
   if (viewport.width === 320) {
-    const summary = header.getByRole("button", { name: "Open navigation menu", exact: true });
+    const summary = header.locator(".mobile-menu summary");
     await summary.focus();
     await page.keyboard.press("Enter");
     await header.getByRole("navigation", { name: "Mobile navigation" }).waitFor({ state: "visible" });
@@ -296,6 +296,143 @@ async function checkLandscapeNavigation(browser, baseUrl) {
     assert.ok(await menu.evaluate((element) => element.scrollTop > 0), "Keyboard focus did not scroll the landscape menu.");
     await page.keyboard.press("Escape");
     assert.equal(await summary.evaluate((element) => document.activeElement === element), true);
+  } finally {
+    await context.close();
+  }
+}
+
+async function checkNavigationWithoutJavaScript(browser, baseUrl) {
+  const context = await browser.newContext({ javaScriptEnabled: false, colorScheme: options.theme, viewport: viewports[1] });
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/`, { waitUntil: "load" });
+    const menu = page.getByRole("navigation", { name: "Mobile navigation" });
+    const summary = page.locator(".mobile-menu summary");
+    assert.equal(await menu.isVisible(), false);
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await menu.waitFor({ state: "visible" });
+    // Playwright's DOM role table does not map native summary controls. Inspect Chromium's actual accessibility tree.
+    const accessibility = await context.newCDPSession(page);
+    try {
+      const { nodes } = await accessibility.send("Accessibility.getFullAXTree");
+      assert.ok(
+        nodes.some(
+          (node) =>
+            node.name?.value === "Open navigation menu" &&
+            node.properties?.some((property) => property.name === "expanded" && property.value.value === true)
+        ),
+        "Assistive technology must announce the opened menu without JavaScript."
+      );
+    } finally {
+      await accessibility.detach();
+    }
+    await menu.getByRole("link", { name: "contact", exact: true }).click();
+    await page.waitForURL(`${baseUrl}/contact/`);
+    await page.getByRole("heading", { name: /^Contact/, level: 1 }).waitFor();
+  } finally {
+    await context.close();
+  }
+}
+
+async function checkHomeWriting(page, baseUrl) {
+  if (new URL(page.url()).pathname !== "/") return;
+  const links = page.locator(".home-writing-entry h3 a");
+  if (includesRoute("/notes/qa-grouped/")) {
+    assert.equal(
+      await links.filter({ hasText: "Grouped compiler note" }).getAttribute("href"),
+      "/notes/qa-grouped/",
+      "The published route-group fixture must appear on the homepage with a reachable Notes URL."
+    );
+  }
+  const entries = await links.evaluateAll((items) => items.map((link) => ({ href: link.getAttribute("href"), title: link.textContent.trim() })));
+  for (const entry of entries) {
+    await page.locator(".home-writing-entry h3").getByRole("link", { name: entry.title, exact: true }).click();
+    await page.waitForURL(new URL(entry.href, baseUrl).href);
+    await page.getByRole("heading", { name: entry.title, exact: true, level: 1 }).waitFor();
+    await page.goBack();
+    await page.waitForURL(`${baseUrl}/`);
+    await page.locator(".home-writing-entry h3").getByRole("link", { name: entry.title, exact: true }).waitFor();
+  }
+}
+
+async function checkEmptyNotesLoadingAndTheme(browser, baseUrl) {
+  const context = await browser.newContext({ colorScheme: "light", viewport: viewports[1] });
+  const page = await preparePage(context);
+  try {
+    const assertTheme = async (theme) => {
+      await page.waitForFunction((expected) => document.documentElement.classList.contains(expected), theme);
+      assert.equal(await page.locator("#notes-content [data-theme-toggle]").getAttribute("aria-pressed"), String(theme === "dark"));
+    };
+    for (const route of ["/notes/", "/notes/courses/", "/notes/topics/", "/notes/tags/"].filter(includesRoute)) {
+      await loadRoute(page, baseUrl, route);
+      await page.waitForLoadState("networkidle");
+      const bytes = await page.evaluate(
+        () =>
+          [...document.scripts]
+            .filter((script) => !script.src && (!script.type || script.type === "module"))
+            .reduce((total, script) => total + new TextEncoder().encode(script.textContent).length, 0) +
+          performance
+            .getEntriesByType("resource")
+            .filter((entry) => new URL(entry.name).origin === location.origin && new URL(entry.name).pathname.endsWith(".js"))
+            .reduce((total, entry) => total + entry.decodedBodySize, 0)
+      );
+      assert.ok(
+        bytes > 0 && bytes <= 25_000,
+        `An empty Notes library must stay usable within 25 KB of JavaScript: ${route} requested ${bytes} bytes.`
+      );
+      await assertTheme("light");
+      await page.locator("#notes-content").focus();
+      await page.keyboard.press("d");
+      await assertTheme("dark");
+      await page.keyboard.press("d");
+      await assertTheme("light");
+      const toggle = page.locator("#notes-content [data-theme-toggle]");
+      await toggle.focus();
+      await page.keyboard.press("Enter");
+      await assertTheme("dark");
+      assert.equal(await page.evaluate(() => localStorage.getItem("mahad-theme")), "dark");
+      await page.reload({ waitUntil: "load" });
+      await assertTheme("dark");
+      await toggle.click();
+      await assertTheme("light");
+    }
+    // OS changes apply only while following the system preference.
+    const other = await context.newPage();
+    await other.goto(`${baseUrl}/blog/`, { waitUntil: "load" });
+    await other.evaluate(() => localStorage.removeItem("mahad-theme"));
+    await page.emulateMedia({ colorScheme: "dark" });
+    await assertTheme("dark");
+    await page.emulateMedia({ colorScheme: "light" });
+    await assertTheme("light");
+    await page.locator("#notes-content [data-theme-toggle]").click();
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.emulateMedia({ colorScheme: "light" });
+    await assertTheme("dark");
+    // A choice in another tab must be reflected in this tab.
+    await other.evaluate(() => localStorage.setItem("mahad-theme", "light"));
+    await assertTheme("light");
+    await other.evaluate(() => localStorage.setItem("mahad-theme", "dark"));
+    await assertTheme("dark");
+    await other.close();
+    await page.getByRole("link", { name: "Blog", exact: true }).click();
+    await page.waitForURL(`${baseUrl}/blog/`);
+    await page.waitForFunction(() => document.documentElement.dataset.theme === "dark");
+    await page.goBack();
+    await page.locator("#notes-content [data-theme-toggle]").waitFor();
+    await assertTheme("dark");
+    await page.locator("#notes-content [data-theme-toggle]").click();
+    await assertTheme("light");
+    await page.evaluate(() => {
+      Storage.prototype.setItem = () => {
+        throw new DOMException("Storage unavailable", "SecurityError");
+      };
+    });
+    await page.locator("#notes-content [data-theme-toggle]").click();
+    await assertTheme("dark");
+    await page.locator("#notes-content [data-theme-toggle]").click();
+    await assertTheme("light");
+    assert.deepEqual(await page.evaluate(() => globalThis.__cspViolations), [], "Empty Notes theme controls must work under the deployed CSP.");
   } finally {
     await context.close();
   }
@@ -364,13 +501,52 @@ async function checkBlogFilters(page, baseUrl) {
   await topic.focus();
   await page.keyboard.press("Enter");
   await page.waitForFunction((tag) => new URLSearchParams(location.search).get("tag") === tag, key);
+  await page.waitForFunction(
+    ({ tag, count }) => {
+      const selected = document.querySelector('.blog-filters a[aria-current="true"]');
+      return (
+        selected &&
+        new URL(selected.getAttribute("href"), location.href).searchParams.get("tag") === tag &&
+        document.querySelectorAll(".blog-post-preview").length === count
+      );
+    },
+    { tag: key, count: expected }
+  );
   assert.equal(await topic.getAttribute("aria-current"), "true");
   assert.equal(await page.locator(".blog-post-preview").count(), expected);
+  // Do not reload first: a reload used to conceal the broken topic -> article -> Back journey.
+  const archiveTitle = await page.locator("h1").innerText();
+  const article = page.locator(".blog-post-preview h2 a").first();
+  const articleHref = await article.getAttribute("href");
+  const articleTitle = await article.innerText();
+  await article.click();
+  await page.waitForURL(new URL(articleHref, baseUrl).href);
+  await page.getByRole("heading", { name: articleTitle, exact: true, level: 1 }).waitFor();
+  await page.goBack();
+  await page.getByRole("heading", { name: archiveTitle, exact: true, level: 1 }).waitFor();
+  await page.waitForFunction(
+    ({ tag, count }) => {
+      const selected = document.querySelector('.blog-filters a[aria-current="true"]');
+      return (
+        new URLSearchParams(location.search).get("tag") === tag &&
+        document.querySelectorAll(".blog-post-preview").length === count &&
+        selected &&
+        new URL(selected.getAttribute("href"), location.href).searchParams.get("tag") === tag
+      );
+    },
+    { tag: key, count: expected }
+  );
+  await page.goForward();
+  await page.waitForURL(new URL(articleHref, baseUrl).href);
+  await page.getByRole("heading", { name: articleTitle, exact: true, level: 1 }).waitFor();
+  await page.goBack();
+  await page.getByRole("heading", { name: archiveTitle, exact: true, level: 1 }).waitFor();
   await page.reload({ waitUntil: "load" });
   await page.waitForFunction(() => !document.querySelector('astro-island[client="load"][ssr]'));
   await page.waitForFunction(() => document.querySelector('.blog-filters a[aria-current="true"]')?.getAttribute("href")?.includes("?tag="));
   await filters.getByRole("link", { name: /^All posts/ }).click();
   await page.waitForFunction(() => !location.search);
+  await page.waitForFunction((count) => document.querySelectorAll(".blog-post-preview").length === count, total);
   assert.equal(await page.locator(".blog-post-preview").count(), total);
   await page.goBack();
   await page.waitForFunction((tag) => new URLSearchParams(location.search).get("tag") === tag, key);
@@ -380,6 +556,7 @@ async function checkBlogFilters(page, baseUrl) {
   assert.equal(await page.locator(".blog-post-preview").count(), 0);
   await page.getByRole("link", { name: "see all posts", exact: true }).click();
   await page.waitForFunction(() => !location.search);
+  await page.waitForFunction((count) => document.querySelectorAll(".blog-post-preview").length === count, total);
   assert.equal(await page.locator(".blog-post-preview").count(), total);
 }
 
@@ -1243,6 +1420,7 @@ try {
           await checkBlogFilters(page, baseUrl);
           await checkBlogReading(page, viewport);
           await checkNotesAuthoring(page);
+          await checkHomeWriting(page, baseUrl);
           for (const image of await page.locator(".gallery-trigger img").all()) {
             await image.scrollIntoViewIfNeeded();
             await image.evaluate((element) => element.decode());
@@ -1300,10 +1478,14 @@ try {
     }
     await checkNotesTocPopover(browser, baseUrl);
   }
+  if (includesRoute("/notes/") && !hasPublishedNotes) await checkEmptyNotesLoadingAndTheme(browser, baseUrl);
   for (const route of ["/", "/contact/"]) {
     if (includesRoute(route)) await checkNewsletterWithoutProvider(browser, baseUrl, route);
   }
-  if (includesRoute("/")) await checkLandscapeNavigation(browser, baseUrl);
+  if (includesRoute("/")) {
+    await checkLandscapeNavigation(browser, baseUrl);
+    await checkNavigationWithoutJavaScript(browser, baseUrl);
+  }
   if (includesRoute("/volunteering/hacktoberfest-lahore-2025/")) await checkLightboxKeyboard(browser, baseUrl);
 
   console.log(

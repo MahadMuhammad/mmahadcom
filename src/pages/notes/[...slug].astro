@@ -6,6 +6,7 @@ import { Step, Steps } from "fumadocs-ui/components/steps";
 import NotesTabs from "../../components/notes/NotesTabs.astro";
 import NotesCode from "../../components/notes/NotesCode.astro";
 import { NotesDocs } from "../../components/notes/NotesDocs";
+import NotesEmptyTheme from "../../components/notes/NotesEmptyTheme.astro";
 import { site } from "../../data/site";
 import NotesLayout from "../../layouts/NotesLayout.astro";
 import { getNoteMarkdown, getNoteMarkdownPath, getNoteSourceUrl } from "../../lib/notes-llm";
@@ -69,6 +70,21 @@ for (const note of matchingNotes) {
 }
 const emptyCollection = page.data.pageType === "index" && matchingNotes.length === 0;
 const pageTree = withTrailingSlashPageTree(notesSource.getPageTree());
+const docsProps = {
+  tree: pageTree,
+  navTitle: site.fullName,
+  pathname: Astro.url.pathname,
+  params: Astro.params,
+  title: page.data.title,
+  description: emptyCollection ? "Explanations and reference notes will live here as I publish them." : page.data.description,
+  toc: emptyCollection ? [] : toc,
+  markdownUrl,
+  markdownContent,
+  githubUrl,
+  pageType: page.data.pageType,
+  emptyCollection,
+  hasPublishedNotes: publishedNotes.length > 0,
+};
 ---
 
 <NotesLayout
@@ -78,76 +94,75 @@ const pageTree = withTrailingSlashPageTree(notesSource.getPageTree());
   markdownPath={markdownUrl}
   pageType={page.data.pageType}
 >
-  <NotesDocs
-    tree={pageTree}
-    navTitle={site.fullName}
-    pathname={Astro.url.pathname}
-    params={Astro.params}
-    title={page.data.title}
-    description={emptyCollection ? "Explanations and reference notes will live here as I publish them." : page.data.description}
-    toc={emptyCollection ? [] : toc}
-    markdownUrl={markdownUrl}
-    markdownContent={markdownContent}
-    githubUrl={githubUrl}
-    pageType={page.data.pageType}
-    emptyCollection={emptyCollection}
-    hasPublishedNotes={publishedNotes.length > 0}
-    client:load
-  >
-    {
-      page.data.indexType === "all" && publishedNotes.length > 0 && (
-        <nav class="notes-collection-links" aria-label="Note collections">
-          <a href="/notes/courses/">
-            <>
-              <strong>Courses</strong>
-              <span>Follow a subject from the beginning.</span>
-            </>
-          </a>
-          <a href="/notes/topics/">
-            <>
-              <strong>Topics</strong>
-              <span>Find an explanation by subject.</span>
-            </>
-          </a>
-          <a href="/notes/tags/">
-            <>
-              <strong>Tags</strong>
-              <span>Connect ideas across subjects.</span>
-            </>
-          </a>
-        </nav>
-      )
-    }
-    {!emptyCollection && <Content components={{ ...defaultMdxComponents, Step, Steps, Tabs: NotesTabs, pre: NotesCode }} />}
-    {
-      page.data.pageType === "index" && (
-        <section aria-label="Notes in this collection">
-          {matchingNotes.length === 0 ? (
+  {
+    docsProps.hasPublishedNotes ? (
+      <NotesDocs {...docsProps} client:load>
+        {page.data.indexType === "all" && publishedNotes.length > 0 && (
+          <nav class="notes-collection-links" aria-label="Note collections">
+            <a href="/notes/courses/">
+              <>
+                <strong>Courses</strong>
+                <span>Follow a subject from the beginning.</span>
+              </>
+            </a>
+            <a href="/notes/topics/">
+              <>
+                <strong>Topics</strong>
+                <span>Find an explanation by subject.</span>
+              </>
+            </a>
+            <a href="/notes/tags/">
+              <>
+                <strong>Tags</strong>
+                <span>Connect ideas across subjects.</span>
+              </>
+            </a>
+          </nav>
+        )}
+        {!emptyCollection && <Content components={{ ...defaultMdxComponents, Step, Steps, Tabs: NotesTabs, pre: NotesCode }} />}
+        {page.data.pageType === "index" && (
+          <section aria-label="Notes in this collection">
+            {matchingNotes.length === 0 ? (
+              <div>
+                <p>No notes are published in this collection yet.</p>
+                <p>
+                  <a href="/open-source/">Explore my open-source work</a> in the meantime.
+                </p>
+              </div>
+            ) : (
+              [...noteGroups]
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([label, notes]) => (
+                  <section aria-label={label}>
+                    <h2 id={toNotesAnchorId(label)}>{label}</h2>
+                    <ul class="notes-published-list">
+                      {notes.map((note) => (
+                        <li>
+                          <a href={withTrailingSlash(note.url)}>{note.data.title}</a>
+                          <p>{note.data.description}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))
+            )}
+          </section>
+        )}
+      </NotesDocs>
+    ) : (
+      <>
+        <NotesDocs {...docsProps}>
+          <section aria-label="Notes in this collection">
             <div>
               <p>No notes are published in this collection yet.</p>
               <p>
                 <a href="/open-source/">Explore my open-source work</a> in the meantime.
               </p>
             </div>
-          ) : (
-            [...noteGroups]
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([label, notes]) => (
-                <section aria-label={label}>
-                  <h2 id={toNotesAnchorId(label)}>{label}</h2>
-                  <ul class="notes-published-list">
-                    {notes.map((note) => (
-                      <li>
-                        <a href={withTrailingSlash(note.url)}>{note.data.title}</a>
-                        <p>{note.data.description}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))
-          )}
-        </section>
-      )
-    }
-  </NotesDocs>
+          </section>
+        </NotesDocs>
+        <NotesEmptyTheme />
+      </>
+    )
+  }
 </NotesLayout>

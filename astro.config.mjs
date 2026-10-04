@@ -49,5 +49,9 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      // Inline modules make Astro navigation insert a data: script, which our CSP rejects.
+      assetsInlineLimit: (filePath) => (/\.(?:m?js)$/.test(filePath) ? false : undefined),
+    },
   },
 });
