@@ -342,6 +342,88 @@ async function checkHomeWriting(page, baseUrl) {
   }
 }
 
+async function checkEmptyNotesLoadingAndTheme(browser, baseUrl) {
+  const context = await browser.newContext({ colorScheme: "light", viewport: viewports[1] });
+  const page = await preparePage(context);
+  try {
+    const assertTheme = async (theme) => {
+      await page.waitForFunction((expected) => document.documentElement.classList.contains(expected), theme);
+      assert.equal(await page.locator("#notes-content [data-theme-toggle]").getAttribute("aria-pressed"), String(theme === "dark"));
+    };
+    for (const route of ["/notes/", "/notes/courses/", "/notes/topics/", "/notes/tags/"].filter(includesRoute)) {
+      await loadRoute(page, baseUrl, route);
+      await page.waitForLoadState("networkidle");
+      const bytes = await page.evaluate(
+        () =>
+          [...document.scripts]
+            .filter((script) => !script.src && (!script.type || script.type === "module"))
+            .reduce((total, script) => total + new TextEncoder().encode(script.textContent).length, 0) +
+          performance
+            .getEntriesByType("resource")
+            .filter((entry) => new URL(entry.name).origin === location.origin && new URL(entry.name).pathname.endsWith(".js"))
+            .reduce((total, entry) => total + entry.decodedBodySize, 0)
+      );
+      assert.ok(
+        bytes > 0 && bytes <= 25_000,
+        `An empty Notes library must stay usable within 25 KB of JavaScript: ${route} requested ${bytes} bytes.`
+      );
+      await assertTheme("light");
+      await page.locator("#notes-content").focus();
+      await page.keyboard.press("d");
+      await assertTheme("dark");
+      await page.keyboard.press("d");
+      await assertTheme("light");
+      const toggle = page.locator("#notes-content [data-theme-toggle]");
+      await toggle.focus();
+      await page.keyboard.press("Enter");
+      await assertTheme("dark");
+      assert.equal(await page.evaluate(() => localStorage.getItem("mahad-theme")), "dark");
+      await page.reload({ waitUntil: "load" });
+      await assertTheme("dark");
+      await toggle.click();
+      await assertTheme("light");
+    }
+    // OS changes apply only while following the system preference.
+    const other = await context.newPage();
+    await other.goto(`${baseUrl}/blog/`, { waitUntil: "load" });
+    await other.evaluate(() => localStorage.removeItem("mahad-theme"));
+    await page.emulateMedia({ colorScheme: "dark" });
+    await assertTheme("dark");
+    await page.emulateMedia({ colorScheme: "light" });
+    await assertTheme("light");
+    await page.locator("#notes-content [data-theme-toggle]").click();
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.emulateMedia({ colorScheme: "light" });
+    await assertTheme("dark");
+    // A choice in another tab must be reflected in this tab.
+    await other.evaluate(() => localStorage.setItem("mahad-theme", "light"));
+    await assertTheme("light");
+    await other.evaluate(() => localStorage.setItem("mahad-theme", "dark"));
+    await assertTheme("dark");
+    await other.close();
+    await page.getByRole("link", { name: "Blog", exact: true }).click();
+    await page.waitForURL(`${baseUrl}/blog/`);
+    await page.waitForFunction(() => document.documentElement.dataset.theme === "dark");
+    await page.goBack();
+    await page.locator("#notes-content [data-theme-toggle]").waitFor();
+    await assertTheme("dark");
+    await page.locator("#notes-content [data-theme-toggle]").click();
+    await assertTheme("light");
+    await page.evaluate(() => {
+      Storage.prototype.setItem = () => {
+        throw new DOMException("Storage unavailable", "SecurityError");
+      };
+    });
+    await page.locator("#notes-content [data-theme-toggle]").click();
+    await assertTheme("dark");
+    await page.locator("#notes-content [data-theme-toggle]").click();
+    await assertTheme("light");
+    assert.deepEqual(await page.evaluate(() => globalThis.__cspViolations), [], "Empty Notes theme controls must work under the deployed CSP.");
+  } finally {
+    await context.close();
+  }
+}
+
 async function checkNotesEmptyState(page) {
   const content = page.locator("#notes-content");
   if (!(await content.count()) || (await content.getAttribute("data-empty-collection")) !== "true") return;
@@ -1382,6 +1464,7 @@ try {
     }
     await checkNotesTocPopover(browser, baseUrl);
   }
+  if (includesRoute("/notes/") && !hasPublishedNotes) await checkEmptyNotesLoadingAndTheme(browser, baseUrl);
   for (const route of ["/", "/contact/"]) {
     if (includesRoute(route)) await checkNewsletterWithoutProvider(browser, baseUrl, route);
   }

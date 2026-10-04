@@ -51,7 +51,7 @@ const auditPackages = {
   "http-cache-semantics": { direct: false, effects: [] },
 };
 const guardFiles = new Set(["scripts/audit-dependencies.mjs", "scripts/check-static-output.mjs", "scripts/security-checks.test.mjs"]);
-const expectedInputs = "a0c6a3ac4fcd1f39545ed15f69394c83ac3a3077b24f4b833a30accd4922b46f";
+const expectedInputs = "60949f3fc30f139f1dc545e3497c3a110e6d14fcbb743411b4a71d22877ec62d";
 const expectedRemoteModule = "f373fa76e3112446db327c79b34e2bbb1ef1dcad41affb60788adf30edc9588e";
 
 export function evaluateAudit(report, exitCode, { now = Date.now(), latest, versions } = {}) {
