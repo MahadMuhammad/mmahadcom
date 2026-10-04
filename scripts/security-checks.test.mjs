@@ -11,30 +11,21 @@ import { assertBuildDeadline, buildSecurityDeadline } from "./build-security-dea
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const now = Date.parse("2026-10-04T00:00:00Z");
-const context = { now, latest: "4.2.0", versions: [...reviewedVersions] };
+const context = { now, latest: "4.3.0", versions: [...reviewedVersions] };
 function audit() {
   return {
     auditReportVersion: 2,
     vulnerabilities: {
-      "@astrojs/mdx": { name: "@astrojs/mdx", severity: "high", isDirect: true, via: ["astro"], effects: [], nodes: ["node_modules/@astrojs/mdx"] },
-      astro: {
-        name: "astro",
-        severity: "high",
-        isDirect: true,
-        via: ["http-cache-semantics"],
-        effects: ["@astrojs/mdx"],
-        nodes: ["node_modules/astro"],
-      },
       "http-cache-semantics": {
         name: "http-cache-semantics",
         severity: "high",
         isDirect: false,
         via: [{ name: "http-cache-semantics", dependency: "http-cache-semantics", severity: "high", range: "<=4.2.0", url: advisory }],
-        effects: ["astro"],
+        effects: [],
         nodes: ["node_modules/http-cache-semantics"],
       },
     },
-    metadata: { vulnerabilities: { info: 0, low: 0, moderate: 0, high: 3, critical: 0, total: 3 } },
+    metadata: { vulnerabilities: { info: 0, low: 0, moderate: 0, high: 1, critical: 0, total: 1 } },
   };
 }
 
@@ -51,7 +42,7 @@ test("accepts an actually clean audit without using the exception", () => {
 test("fails closed on other findings, extra consumers, paths or advisory chains", () => {
   for (const mutate of [
     (report) => {
-      report.vulnerabilities.astro.via.push({ url: "https://github.com/advisories/GHSA-other", severity: "high" });
+      report.vulnerabilities["http-cache-semantics"].via.push({ url: "https://github.com/advisories/GHSA-other", severity: "high" });
     },
     (report) => {
       report.vulnerabilities["http-cache-semantics"].via[0].url = "https://github.com/advisories/GHSA-other";
@@ -60,12 +51,12 @@ test("fails closed on other findings, extra consumers, paths or advisory chains"
       report.vulnerabilities["http-cache-semantics"].nodes.push("node_modules/other/node_modules/http-cache-semantics");
     },
     (report) => {
-      report.vulnerabilities.other = structuredClone(report.vulnerabilities.astro);
+      report.vulnerabilities.other = structuredClone(report.vulnerabilities["http-cache-semantics"]);
       report.metadata.vulnerabilities.high++;
       report.metadata.vulnerabilities.total++;
     },
     (report) => {
-      report.vulnerabilities.astro.effects.push("another-consumer");
+      report.vulnerabilities["http-cache-semantics"].effects.push("another-consumer");
     },
   ]) {
     const report = audit();
@@ -95,7 +86,7 @@ test("rejects malformed reports and unexpected audit results", () => {
       report.metadata.vulnerabilities.low = 1;
     },
     (report) => {
-      delete report.vulnerabilities.astro.nodes;
+      delete report.vulnerabilities["http-cache-semantics"].nodes;
     },
   ]) {
     const report = audit();
@@ -105,8 +96,9 @@ test("rejects malformed reports and unexpected audit results", () => {
   for (const code of [0, 2, null]) assert.throws(() => evaluateAudit(audit(), code, context));
 });
 test("expires at the deadline and stops when registry state changes or is unavailable", () => {
-  for (const timestamp of [expires, expires + 1, Number.NaN]) assert.throws(() => evaluateAudit(audit(), 1, { now: timestamp, latest: "4.2.0" }));
-  for (const latest of [undefined, "4.2.1", "5.0.0", { error: "network" }]) assert.throws(() => evaluateAudit(audit(), 1, { ...context, latest }));
+  for (const timestamp of [expires, expires + 1, Number.NaN]) assert.throws(() => evaluateAudit(audit(), 1, { ...context, now: timestamp }));
+  for (const latest of [undefined, "4.2.0", "4.3.1", "5.0.0", { error: "network" }])
+    assert.throws(() => evaluateAudit(audit(), 1, { ...context, latest }));
   for (const versions of [undefined, [...reviewedVersions, "4.1.2"], [...reviewedVersions, "4.2.1-beta.1"]])
     assert.throws(() => evaluateAudit(audit(), 1, { ...context, versions }));
 });

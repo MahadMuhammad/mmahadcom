@@ -25,7 +25,15 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
 
   <header class="workshop-masthead">
     <h1>{data.title}</h1>
+    <p class="card-meta"><time datetime={rawDate.toISOString().slice(0, 10)}>{formattedDate}</time> · {data.location}</p>
     <p class="lede">{data.description}</p>
+    {
+      data.talkIntro && data.talkTitle && (
+        <p class="workshop-talk">
+          {data.talkIntro} <strong>“{data.talkTitle}”</strong>.
+        </p>
+      )
+    }
   </header>
 
   <figure class="hero-photo">
@@ -159,6 +167,11 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
   .resource-links a:focus-visible {
     outline: 3px solid var(--focus, #e07a3f);
     outline-offset: 3px;
+  }
+
+  .workshop-talk {
+    max-width: 50rem;
+    margin-top: 1rem;
   }
 
   .workshop-masthead {

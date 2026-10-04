@@ -1,5 +1,7 @@
 ---
 import { LuArrowUpRight } from "react-icons/lu";
+import { notesSource } from "../../lib/notes-source";
+const hasPublishedNotes = notesSource.getPages().some((page) => page.data.pageType === "note");
 
 interface Props {
   title: string;
@@ -18,9 +20,23 @@ const { title, description } = Astro.props;
     <div class="blog-archive"><slot /></div>
     <footer class="blog-end">
       <p><a href="/blog/rss.xml">Subscribe via RSS</a></p>
-      <p>
-        For step-by-step guides and reference material, explore <a href="/notes/">Notes <LuArrowUpRight aria-hidden="true" /></a>.
-      </p>
+      {
+        hasPublishedNotes ? (
+          <p>
+            For step-by-step guides and reference material, explore{" "}
+            <a href="/notes/">
+              Notes <LuArrowUpRight aria-hidden="true" />
+            </a>
+            .
+          </p>
+        ) : (
+          <p>
+            <a href="/open-source/">
+              Explore my open-source work <LuArrowUpRight aria-hidden="true" />
+            </a>
+          </p>
+        )
+      }
     </footer>
   </article>
 </main>

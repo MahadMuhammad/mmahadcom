@@ -28,6 +28,9 @@ for (const route of requestedRoutes ?? []) {
 }
 const selectedRoutes = requestedRoutes ? routes.filter((route) => requestedRoutes.includes(route)) : routes;
 const includesRoute = (route) => selectedRoutes.includes(route);
+const notesIndexHtml = await readFile(join(outputDirectory, "notes/index.html"), "utf8");
+assert.match(notesIndexHtml, /data-notes-library="(?:empty|published)"/, "Notes must declare whether published notes are available.");
+const hasPublishedNotes = notesIndexHtml.includes('data-notes-library="published"');
 const headersFile = join(outputDirectory, "_headers");
 const contentTypes = new Map([
   [".css", "text/css; charset=utf-8"],
@@ -196,7 +199,7 @@ async function checkNewsletter(page, scenario) {
   assert.ok(await email.isEditable(), "The newsletter email field must accept input.");
   await email.focus();
   await page.keyboard.press("Tab");
-  assert.ok(await section.getByRole("button", { name: "Continue", exact: true }).evaluate((button) => document.activeElement === button));
+  assert.ok(await section.getByRole("button", { name: "Continue on Substack", exact: true }).evaluate((button) => document.activeElement === button));
   if (options.screenshots) await saveScreenshot(page, `${scenario} Newsletter ready`, false);
 }
 
@@ -222,7 +225,7 @@ async function checkNewsletterWithoutProvider(browser, baseUrl, route) {
     await page.goto(startUrl, { waitUntil: "load" });
     const section = page.locator(".newsletter-signup");
     const email = section.getByRole("textbox", { name: "Email address", exact: true });
-    const button = section.getByRole("button", { name: "Continue", exact: true });
+    const button = section.getByRole("button", { name: "Continue on Substack", exact: true });
     await button.click();
     assert.ok(await email.evaluate((input) => input.validity.valueMissing), "An empty email must not leave the site.");
     await email.fill("not-an-email");
@@ -295,6 +298,26 @@ async function checkLandscapeNavigation(browser, baseUrl) {
     assert.equal(await summary.evaluate((element) => document.activeElement === element), true);
   } finally {
     await context.close();
+  }
+}
+
+async function checkNotesEmptyState(page) {
+  const content = page.locator("#notes-content");
+  if (!(await content.count()) || (await content.getAttribute("data-empty-collection")) !== "true") return;
+  assert.equal(await content.locator(".notes-page-actions").count(), 0, "Empty collections must not offer page-copy actions.");
+  assert.equal(await page.getByRole("navigation", { name: "On this page", exact: true }).count(), 0);
+  assert.equal(await content.getByText("No notes are published in this collection yet.", { exact: true }).isVisible(), true);
+  assert.equal(await content.getByRole("link", { name: "Explore my open-source work", exact: true }).getAttribute("href"), "/open-source/");
+  if ((await content.getAttribute("data-notes-library")) === "empty") {
+    assert.equal(await page.locator("button[data-search], button[data-search-full]").count(), 0, "An empty Notes library must not offer search.");
+    assert.equal(
+      await page.getByRole("button", { name: "Open Sidebar", exact: true }).count(),
+      0,
+      "An empty Notes library must not offer a dead sidebar trigger."
+    );
+    assert.equal(await page.locator(".notes-collection-links").count(), 0, "Do not promote empty collections.");
+    await page.keyboard.press("Control+k");
+    assert.equal(await page.getByRole("dialog").count(), 0, "Search shortcuts must also be disabled for an empty library.");
   }
 }
 
@@ -1214,6 +1237,7 @@ try {
         try {
           await loadRoute(page, baseUrl, route);
           await checkNewsletter(page, scenario);
+          await checkNotesEmptyState(page);
           await auditPage(page, scenario, viewport.width === 320, failures);
           await checkSharedHeader(page, viewport);
           await checkBlogFilters(page, baseUrl);
@@ -1243,7 +1267,7 @@ try {
 
     try {
       for (const stateCheck of stateChecks) {
-        if (!includesRoute(stateCheck.route)) continue;
+        if (!includesRoute(stateCheck.route) || (stateCheck.route === "/notes/" && !hasPublishedNotes)) continue;
         const page = await preparePage(context);
         const scenario = formatScenario(stateCheck.route, viewport, stateCheck.label);
 
@@ -1268,7 +1292,7 @@ try {
     throw new Error(`Accessibility, CSP, or overflow checks failed in ${failures.length} scenario(s).`);
   }
 
-  if (includesRoute("/notes/")) {
+  if (includesRoute("/notes/") && hasPublishedNotes) {
     await checkClipboardInteractions(browser, baseUrl);
     for (const viewport of viewports) {
       await checkDeferredSearch(browser, baseUrl, viewport);

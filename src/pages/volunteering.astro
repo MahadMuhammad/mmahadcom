@@ -44,10 +44,12 @@ const communityPhotoSizes = "(max-width: 45rem) calc(100vw - 1.5rem), (max-width
 ---
 
 <BaseLayout title="Volunteering" description={pageDescriptions.volunteering} pageClass="page--volunteering">
-  <PageHero
-    title={{ english: "Volunteering", urdu: "رضاکاری" }}
-    lead="I am passionate about giving back to the tech community through workshops, mentorship, and community building. Below are highlights of my volunteering initiatives and the events I've organized."
-  />
+  <PageHero title={{ english: "Volunteering", urdu: "رضاکاری" }} lead="Workshops and mentorship to help students get started in open source." />
+
+  <nav class="reader-section-links" aria-label="Volunteering sections">
+    <a href="#workshops-heading">Events and workshops</a>
+    <a href="#leadership-heading">Community leadership</a>
+  </nav>
 
   <section class="section-block" aria-labelledby="leadership-heading">
     <div class="section-heading">
@@ -77,8 +79,8 @@ const communityPhotoSizes = "(max-width: 45rem) calc(100vw - 1.5rem), (max-width
                 <LinkPills links={role.links} />
               ))}
             {role.collaborators.length > 0 && (
-              <>
-                <span class="community-card__subhead">Collaborators:</span>
+              <details class="reader-details">
+                <summary>Collaborating communities</summary>
                 <ul class="resource-list">
                   {role.collaborators.map((collaborator) => (
                     <li>
@@ -86,7 +88,7 @@ const communityPhotoSizes = "(max-width: 45rem) calc(100vw - 1.5rem), (max-width
                     </li>
                   ))}
                 </ul>
-              </>
+              </details>
             )}
           </article>
         ))

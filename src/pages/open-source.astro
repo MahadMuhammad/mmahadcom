@@ -9,7 +9,7 @@ import { githubContributionsUrl, majorContributions, openSourceProjects, pageDes
 <BaseLayout title="Open-source" description={pageDescriptions.openSource} pageClass="page--open-source">
   <PageHero
     title={{ english: "Open-Source Contribution", urdu: "اوپن سورس تعاون" }}
-    lead="I am passionate about contributing to open-source software and have been actively involved in various projects, including major contributions through Google Summer of Code."
+    lead="I work on compilers and help people make their first open-source contribution."
   />
 
   <section class="section-block" aria-labelledby="gsoc-heading">
@@ -24,7 +24,7 @@ import { githubContributionsUrl, majorContributions, openSourceProjects, pageDes
               <img class="project-logo" src={project.image} alt={project.imageAlt} width="1000" height="500" loading="lazy" />
               <div class="project-card__heading">
                 <h3>
-                  <ExternalLink href={project.href}>{project.title}</ExternalLink>
+                  <ExternalLink href={project.href}>{project.displayTitle}</ExternalLink>
                 </h3>
                 <p class="project-card__meta">
                   Project with <ExternalLink href={project.organizationHref}>{project.organization}</ExternalLink> · {project.date}
@@ -32,22 +32,26 @@ import { githubContributionsUrl, majorContributions, openSourceProjects, pageDes
               </div>
             </header>
             <div class="project-card__content">
-              {index === 0 ? (
-                <p class="project-card__body">
-                  My Google Summer of Code 2024 project involved creating a test suite adapter to run official rustc test cases on GCC Rust. Since
-                  rustc uses a different testing framework called{" "}
-                  <ExternalLink href="https://rustc-dev-guide.rust-lang.org/tests/compiletest.html">Compiletest</ExternalLink>, I developed a
-                  command-line tool in Rust, <ExternalLink href="https://github.com/Rust-GCC/rusttest-to-dg">rusttest-to-dg</ExternalLink>, to parse
-                  rustc test cases and convert them into a format compatible with GCC's DejaGNU testing framework. LWN coverage of my work can be
-                  found in <ExternalLink href="https://lwn.net/Articles/991199/">LWN’s project report</ExternalLink>.
+              <p class="project-card__body">{project.summary}</p>
+              <details class="reader-details">
+                <summary>Project background</summary>
+                {index === 0 ? (
+                  <p class="project-card__body">
+                    My Google Summer of Code 2024 project involved creating a test suite adapter to run official rustc test cases on GCC Rust. Since
+                    rustc uses a different testing framework called{" "}
+                    <ExternalLink href="https://rustc-dev-guide.rust-lang.org/tests/compiletest.html">Compiletest</ExternalLink>, I developed a
+                    command-line tool in Rust, <ExternalLink href="https://github.com/Rust-GCC/rusttest-to-dg">rusttest-to-dg</ExternalLink>, to parse
+                    rustc test cases and convert them into a format compatible with GCC's DejaGNU testing framework. LWN coverage of my work can be
+                    found in <ExternalLink href="https://lwn.net/Articles/991199/">LWN’s project report</ExternalLink>.
+                  </p>
+                ) : (
+                  <p class="project-card__body">{project.description}</p>
+                )}
+                <p class="impact-copy">
+                  <strong>Impact:</strong> {project.impact}
                 </p>
-              ) : (
-                <p class="project-card__body">{project.description}</p>
-              )}
-              <p class="impact-copy">
-                <strong>Impact:</strong> {project.impact}
-              </p>
-              {"note" in project && <p class="project-note">{project.note}</p>}
+                {"note" in project && <p class="project-note">{project.note}</p>}
+              </details>
             </div>
           </article>
         ))

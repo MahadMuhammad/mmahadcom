@@ -45,6 +45,11 @@ try {
   await mkdir(fixtureContent);
   await cp(join(projectRoot, "scripts/fixtures/blog"), fixtureContent, copyOptions);
   await cp(join(projectRoot, "scripts/fixtures/notes"), join(fixtureRoot, "src/content/notes"), copyOptions);
+  await writeFile(
+    join(fixtureRoot, "src/content/notes/qa-notes-toc.mdx"),
+    "---\ntitle: Long Notes contents verification\ndescription: Synthetic content for checking the mobile contents panel\npublishedAt: 2000-01-02\ntags: [verification]\n---\n\n" +
+      Array.from({ length: 24 }, (_, index) => `## Section ${index + 1}\n\nA reference paragraph for section ${index + 1}.\n\n`).join("")
+  );
   const images = join(fixtureRoot, "public/images/__blog-qa");
   await mkdir(images);
   for (const [name, color] of [
@@ -77,7 +82,7 @@ try {
   for (const theme of themes)
     run("scripts/check-accessibility.mjs", [
       "--routes",
-      "/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/,/notes/qa-authoring/",
+      "/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/,/notes/,/notes/courses/,/notes/topics/,/notes/tags/,/notes/qa-authoring/,/notes/qa-notes-toc/",
       "--theme",
       theme,
       ...(options.screenshots ? ["--screenshots"] : []),

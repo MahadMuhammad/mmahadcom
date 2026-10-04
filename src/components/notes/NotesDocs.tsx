@@ -3,6 +3,7 @@ import type { Root } from "fumadocs-core/page-tree";
 import type { TOCItemType } from "fumadocs-core/toc";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
+import { ThemeSwitch } from "fumadocs-ui/layouts/shared/slots/theme-switch";
 import { RootProvider } from "fumadocs-ui/provider/astro";
 import type { ReactNode } from "react";
 import { navigate } from "astro:transitions/client";
@@ -21,6 +22,8 @@ interface NotesDocsProps {
   markdownContent: string;
   githubUrl?: string;
   pageType: "index" | "note";
+  emptyCollection: boolean;
+  hasPublishedNotes: boolean;
   children: ReactNode;
 }
 
@@ -83,6 +86,8 @@ export function NotesDocs({
   markdownContent,
   githubUrl,
   pageType,
+  emptyCollection,
+  hasPublishedNotes,
   children,
 }: NotesDocsProps) {
   return (
@@ -96,13 +101,21 @@ export function NotesDocs({
         enableSystem: true,
         disableTransitionOnChange: true,
       }}
-      search={{ SearchDialog: NotesSearchBoundary, preload: false }}
+      search={{ enabled: hasPublishedNotes, SearchDialog: NotesSearchBoundary, preload: false }}
     >
-      <DocsLayout tree={tree} nav={{ title: navTitle, url: "/" }}>
+      <DocsLayout
+        tree={tree}
+        nav={{ enabled: hasPublishedNotes, title: navTitle, url: "/" }}
+        sidebar={{ enabled: hasPublishedNotes }}
+        searchToggle={{ enabled: hasPublishedNotes }}
+      >
         <DocsPage
           toc={toc}
-          tableOfContent={{ container: { role: "navigation", "aria-labelledby": "toc-title" } }}
-          tableOfContentPopover={{ component: <NotesTocPopover items={toc} /> }}
+          tableOfContent={{ enabled: !emptyCollection, container: { role: "navigation", "aria-labelledby": "toc-title" } }}
+          tableOfContentPopover={{ enabled: !emptyCollection, component: <NotesTocPopover items={toc} /> }}
+          footer={{ enabled: !emptyCollection }}
+          data-notes-library={hasPublishedNotes ? "published" : "empty"}
+          data-empty-collection={emptyCollection ? "true" : "false"}
           id="notes-content"
           tabIndex={-1}
           className={pageType === "index" ? "notes-index-page" : undefined}
@@ -120,7 +133,8 @@ export function NotesDocs({
               <DocsTitle>{title}</DocsTitle>
               {description && <DocsDescription>{description}</DocsDescription>}
             </div>
-            <NotesPageActions markdownContent={markdownContent} markdownUrl={markdownUrl} githubUrl={githubUrl} />
+            {!hasPublishedNotes && <ThemeSwitch className="w-fit self-start" />}
+            {!emptyCollection && <NotesPageActions markdownContent={markdownContent} markdownUrl={markdownUrl} githubUrl={githubUrl} />}
           </header>
           <DocsBody className="notes-docs-body w-full max-w-[68ch]">{children}</DocsBody>
         </DocsPage>
