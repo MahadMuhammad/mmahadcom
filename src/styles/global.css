@@ -705,6 +705,8 @@ h3 {
 
 .footer-meta {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
   align-items: center;
   justify-content: center;
   padding-block: 0.35rem 1.1rem;
@@ -868,4 +870,29 @@ h3 {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+.reader-details {
+  margin-top: 1rem;
+}
+.reader-details summary {
+  width: fit-content;
+  min-height: 2.75rem;
+  padding-block: 0.5rem;
+  cursor: pointer;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+.reader-details p {
+  margin-top: 0.75rem;
+}
+.reader-section-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+.reader-section-links a {
+  min-height: 2.75rem;
+  padding-block: 0.5rem;
 }

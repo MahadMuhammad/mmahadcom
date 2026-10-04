@@ -16,7 +16,7 @@ const { id, className } = Astro.props;
     <label for={`${id}-email`}>Email address</label>
     <div class="newsletter-fields">
       <input id={`${id}-email`} name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required />
-      <button type="submit">Continue</button>
+      <button type="submit">Continue on Substack</button>
     </div>
   </form>
   <p class="newsletter-handoff" id={`${id}-handoff`}>Confirm your subscription on <a href={newsletter.subscribeUrl}>Substack</a>.</p>
@@ -57,8 +57,8 @@ const { id, className } = Astro.props;
     font-size: 0.875rem;
   }
   .newsletter-fields {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     max-width: 30rem;
   }
@@ -71,6 +71,7 @@ const { id, className } = Astro.props;
     line-height: 1.4;
   }
   input {
+    flex: 1 1 14rem;
     min-width: 0;
     width: 100%;
     padding: 0.6rem 0.75rem;
@@ -79,6 +80,7 @@ const { id, className } = Astro.props;
     color: var(--ink);
   }
   button {
+    flex: 1 0 auto;
     padding: 0.6rem 0.85rem;
     border: 1px solid var(--ink);
     background: var(--ink);

@@ -124,6 +124,8 @@ export const portfolioContact = {
 export const openSourceProjects = [
   {
     title: "Rustc Testsuite Adapter for GCC Rust (GCCRS)",
+    displayTitle: "rusttest-to-dg",
+    summary: "I built a Rust tool that lets GCC Rust reuse rustc’s test suite.",
     href: "https://summerofcode.withgoogle.com/archive/2024/projects/KVAetUOC",
     organization: "GNU Compiler Collection (GCC)",
     organizationHref: "https://gcc.gnu.org/",
@@ -145,6 +147,8 @@ export const openSourceProjects = [
   },
   {
     title: "Improving user errors & Error Code Support for GCC Rust Frontend",
+    displayTitle: "Error codes for GCC Rust",
+    summary: "I added error-code support to align GCC Rust’s diagnostics with rustc.",
     href: "https://summerofcode.withgoogle.com/archive/2023/projects/PZbjvfZl",
     organization: "GNU Compiler Collection (GCC)",
     organizationHref: "https://gcc.gnu.org/",
@@ -186,6 +190,9 @@ export const majorContributions: ReadonlyArray<Link> = [
 export const teachingExperiences = [
   {
     title: "Teaching Assistant — CS4031: Compiler Construction",
+    displayTitle: "Compiler construction",
+    summary: "I helped students build lexers, parsers, and a simple compiler.",
+    role: "Teaching Assistant · CS4031",
     meta: "Spring 2025 | FAST NUCES",
     paragraphs: [
       "Assisted in teaching two computer science sections for the Compiler Construction course. Created comprehensive guidelines for FAST Lang, a programming language inspired by C, to help students understand compiler concepts. The language document guided students through building their own lexers and parsers, and then combining everything into a simple compiler.",
@@ -194,6 +201,9 @@ export const teachingExperiences = [
   },
   {
     title: "Lead Computer Science Instructor — AI and Digital Tools",
+    displayTitle: "AI and digital tools",
+    summary: "I taught foundational AI and digital productivity tools through the Indonesia Zero Semester Project.",
+    role: "Lead Computer Science Instructor",
     meta: "Indonesia Zero Semester Project",
     paragraphs: [
       "Taught foundational AI concepts and digital productivity tools to underprivileged students as part of the Indonesia Zero Semester Project. This initiative helps prepare students for future academic study in Indonesia by providing essential technical skills and knowledge.",

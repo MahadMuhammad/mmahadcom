@@ -67,6 +67,7 @@ for (const note of matchingNotes) {
     noteGroups.set(label, group);
   }
 }
+const emptyCollection = page.data.pageType === "index" && matchingNotes.length === 0;
 const pageTree = withTrailingSlashPageTree(notesSource.getPageTree());
 ---
 
@@ -83,16 +84,18 @@ const pageTree = withTrailingSlashPageTree(notesSource.getPageTree());
     pathname={Astro.url.pathname}
     params={Astro.params}
     title={page.data.title}
-    description={page.data.description}
-    toc={toc}
+    description={emptyCollection ? "Explanations and reference notes will live here as I publish them." : page.data.description}
+    toc={emptyCollection ? [] : toc}
     markdownUrl={markdownUrl}
     markdownContent={markdownContent}
     githubUrl={githubUrl}
     pageType={page.data.pageType}
+    emptyCollection={emptyCollection}
+    hasPublishedNotes={publishedNotes.length > 0}
     client:load
   >
     {
-      page.data.indexType === "all" && (
+      page.data.indexType === "all" && publishedNotes.length > 0 && (
         <nav class="notes-collection-links" aria-label="Note collections">
           <a href="/notes/courses/">
             <>
@@ -115,12 +118,17 @@ const pageTree = withTrailingSlashPageTree(notesSource.getPageTree());
         </nav>
       )
     }
-    <Content components={{ ...defaultMdxComponents, Step, Steps, Tabs: NotesTabs, pre: NotesCode }} />
+    {!emptyCollection && <Content components={{ ...defaultMdxComponents, Step, Steps, Tabs: NotesTabs, pre: NotesCode }} />}
     {
       page.data.pageType === "index" && (
         <section aria-label="Notes in this collection">
           {matchingNotes.length === 0 ? (
-            <p>No notes are published in this collection yet.</p>
+            <div>
+              <p>No notes are published in this collection yet.</p>
+              <p>
+                <a href="/open-source/">Explore my open-source work</a> in the meantime.
+              </p>
+            </div>
           ) : (
             [...noteGroups]
               .sort(([a], [b]) => a.localeCompare(b))

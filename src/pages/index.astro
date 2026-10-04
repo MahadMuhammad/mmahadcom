@@ -48,6 +48,7 @@ const projects = [
           sit around compilers, embedded ML, and helping people get started in open source.
         </p>
       </div>
+      <a class="home-project-jump" href="#home-work-title">View my open-source work</a>
       <details class="home-background">
         <summary>A little more about me</summary>
         <p>
@@ -77,7 +78,7 @@ const projects = [
     <HomeWriting entries={writing} />
 
     <section class="home-work" aria-labelledby="home-work-title">
-      <div class="home-section-heading"><h2 id="home-work-title">Selected open-source work</h2></div>
+      <div class="home-section-heading"><h2 id="home-work-title" tabindex="-1">Open-source work</h2></div>
       {
         projects.map((project) => (
           <article class="home-project">
