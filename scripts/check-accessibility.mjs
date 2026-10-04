@@ -264,7 +264,7 @@ async function checkSharedHeader(page, viewport) {
   await toggle.click();
   await page.waitForFunction((theme) => document.documentElement.dataset.theme === theme, initial);
   if (viewport.width === 320) {
-    const summary = header.getByRole("button", { name: "Open navigation menu", exact: true });
+    const summary = header.locator(".mobile-menu summary");
     await summary.focus();
     await page.keyboard.press("Enter");
     await header.getByRole("navigation", { name: "Mobile navigation" }).waitFor({ state: "visible" });
@@ -312,7 +312,21 @@ async function checkNavigationWithoutJavaScript(browser, baseUrl) {
     await summary.focus();
     await page.keyboard.press("Enter");
     await menu.waitFor({ state: "visible" });
-    assert.match(await summary.ariaSnapshot(), /button .*\[expanded\]/, "Assistive technology must announce the opened menu without JavaScript.");
+    // Playwright's DOM role table does not map native summary controls. Inspect Chromium's actual accessibility tree.
+    const accessibility = await context.newCDPSession(page);
+    try {
+      const { nodes } = await accessibility.send("Accessibility.getFullAXTree");
+      assert.ok(
+        nodes.some(
+          (node) =>
+            node.name?.value === "Open navigation menu" &&
+            node.properties?.some((property) => property.name === "expanded" && property.value.value === true)
+        ),
+        "Assistive technology must announce the opened menu without JavaScript."
+      );
+    } finally {
+      await accessibility.detach();
+    }
     await menu.getByRole("link", { name: "contact", exact: true }).click();
     await page.waitForURL(`${baseUrl}/contact/`);
     await page.getByRole("heading", { name: /^Contact/, level: 1 }).waitFor();
