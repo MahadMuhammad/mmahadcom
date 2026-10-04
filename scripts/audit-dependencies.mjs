@@ -37,6 +37,7 @@ export const reviewedVersions = Object.freeze([
   "4.2.0-beta.1",
   "4.2.0-beta.2",
   "4.2.0",
+  "4.3.0",
 ]);
 export const ignoredRootEntries = Object.freeze([".git", "node_modules", ".astro", "dist", "test-results"]);
 const sourceDirectories = [".github", "design", "previews", "public", "scripts", "src"];
@@ -46,8 +47,11 @@ const packages = {
   astro: { version: "7.3.1", direct: true, via: "http-cache-semantics", effects: ["@astrojs/mdx"] },
   "http-cache-semantics": { version: "4.2.0", direct: false, effects: ["astro"] },
 };
+const auditPackages = {
+  "http-cache-semantics": { direct: false, effects: [] },
+};
 const guardFiles = new Set(["scripts/audit-dependencies.mjs", "scripts/check-static-output.mjs", "scripts/security-checks.test.mjs"]);
-const expectedInputs = "1c29ec0ca4dd55484f38312ca5e24d809c15a391f082d8e5e92313ef9039a2c6";
+const expectedInputs = "a0c6a3ac4fcd1f39545ed15f69394c83ac3a3077b24f4b833a30accd4922b46f";
 const expectedRemoteModule = "f373fa76e3112446db327c79b34e2bbb1ef1dcad41affb60788adf30edc9588e";
 
 export function evaluateAudit(report, exitCode, { now = Date.now(), latest, versions } = {}) {
@@ -70,8 +74,12 @@ export function evaluateAudit(report, exitCode, { now = Date.now(), latest, vers
     return "clean";
   }
   assert.equal(exitCode, 1, "Unexpected audit command exit status.");
-  assert.deepEqual(Object.keys(report.vulnerabilities).sort(), Object.keys(packages).sort(), "Unexpected vulnerable package; no exception applies.");
-  for (const [name, expected] of Object.entries(packages)) {
+  assert.deepEqual(
+    Object.keys(report.vulnerabilities).sort(),
+    Object.keys(auditPackages).sort(),
+    "Unexpected vulnerable package; no exception applies."
+  );
+  for (const [name, expected] of Object.entries(auditPackages)) {
     const entry = report.vulnerabilities[name];
     assert.equal(entry.name, name);
     assert.equal(entry.severity, "high");
@@ -89,7 +97,7 @@ export function evaluateAudit(report, exitCode, { now = Date.now(), latest, vers
     }
   }
   assert.ok(Number.isFinite(now) && now < expires, "The temporary advisory exception has expired.");
-  assert.equal(latest, "4.2.0", "A new cache release is available or registry lookup failed; review and update dependencies.");
+  assert.equal(latest, "4.3.0", "A new cache release is available or registry lookup failed; review and update dependencies.");
   assert.deepEqual(versions, reviewedVersions, "The upstream release inventory changed or could not be checked; review available fixes.");
   return "exception";
 }
