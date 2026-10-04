@@ -1,6 +1,6 @@
-import { getCollection } from "astro:content";
 import { getPublishedBlog, getWritingPath } from "./blog-source";
-import { getNotePath } from "./notes-slug";
+import { notesSource } from "./notes-source";
+import { withTrailingSlash } from "./url-paths";
 
 export interface HomeWritingEntry {
   title: string;
@@ -11,7 +11,7 @@ export interface HomeWritingEntry {
 
 /** A reader-facing selection; Blog and Notes remain separate. */
 export async function getRecentWriting(): Promise<HomeWritingEntry[]> {
-  const [blog, notes] = await Promise.all([getPublishedBlog(), getCollection("notes")]);
+  const blog = await getPublishedBlog();
 
   const entries: HomeWritingEntry[] = blog.map((entry) => ({
     title: entry.data.title,
@@ -20,11 +20,11 @@ export async function getRecentWriting(): Promise<HomeWritingEntry[]> {
     publishedAt: entry.data.publishedAt,
   }));
 
-  for (const note of notes) {
+  for (const note of notesSource.getPages()) {
     if (note.data.draft || note.data.pageType !== "note" || !note.data.publishedAt) continue;
     entries.push({
       title: note.data.title,
-      href: getNotePath(note),
+      href: withTrailingSlash(note.url),
       format: "Note",
       publishedAt: note.data.publishedAt,
     });

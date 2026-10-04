@@ -45,6 +45,13 @@ try {
   await mkdir(fixtureContent);
   await cp(join(projectRoot, "scripts/fixtures/blog"), fixtureContent, copyOptions);
   await cp(join(projectRoot, "scripts/fixtures/notes"), join(fixtureRoot, "src/content/notes"), copyOptions);
+  const groupedNotes = join(fixtureRoot, "src/content/notes/(compiler)");
+  await mkdir(groupedNotes);
+  await writeFile(
+    join(groupedNotes, "qa-grouped.mdx"),
+    // Keep this synthetic note in the recent-writing selection as real posts are added.
+    "---\ntitle: Grouped compiler note\ndescription: A published note inside a route group\npublishedAt: 2099-01-05\ntags: [verification]\n---\n\n## Compiler reference\n\nThis note must be reachable from the homepage.\n"
+  );
   await writeFile(
     join(fixtureRoot, "src/content/notes/qa-notes-toc.mdx"),
     "---\ntitle: Long Notes contents verification\ndescription: Synthetic content for checking the mobile contents panel\npublishedAt: 2000-01-02\ntags: [verification]\n---\n\n" +
@@ -82,7 +89,7 @@ try {
   for (const theme of themes)
     run("scripts/check-accessibility.mjs", [
       "--routes",
-      "/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/,/notes/,/notes/courses/,/notes/topics/,/notes/tags/,/notes/qa-authoring/,/notes/qa-notes-toc/",
+      "/,/blog/,/blog/qa-blog-reader/,/blog/qa-blog-tagless/,/notes/,/notes/courses/,/notes/topics/,/notes/tags/,/notes/qa-authoring/,/notes/qa-notes-toc/,/notes/qa-grouped/",
       "--theme",
       theme,
       ...(options.screenshots ? ["--screenshots"] : []),

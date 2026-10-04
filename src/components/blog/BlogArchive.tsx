@@ -1,5 +1,5 @@
 import { LuTag } from "react-icons/lu";
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useState } from "react";
 import { blogTagHref, blogTagKey } from "../../lib/blog-tags";
 
 export interface BlogPreview {
@@ -29,15 +29,6 @@ export function BlogArchive({ posts }: { posts: BlogPreview[] }) {
     return () => window.removeEventListener("popstate", readTag);
   }, []);
 
-  function selectTag(event: MouseEvent<HTMLAnchorElement>, tag: string) {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    const key = blogTagKey(tag);
-    if (key === selected) return;
-    window.history.pushState(null, "", key ? blogTagHref(key) : "/blog/");
-    setSelected(key);
-  }
-
   return (
     <>
       <p className="blog-filter-status" role="status">
@@ -62,7 +53,7 @@ export function BlogArchive({ posts }: { posts: BlogPreview[] }) {
             <ul className="blog-tags" aria-label="Topics">
               {post.tags.map((tag) => (
                 <li key={tag}>
-                  <a href={blogTagHref(tag)} onClick={(event) => selectTag(event, tag)}>
+                  <a href={blogTagHref(tag)}>
                     <LuTag aria-hidden="true" /> {tag}
                   </a>
                 </li>
@@ -75,11 +66,7 @@ export function BlogArchive({ posts }: { posts: BlogPreview[] }) {
         <section className="blog-empty">
           <h2>No posts for this topic yet</h2>
           <p>
-            Try another topic, or{" "}
-            <a href="/blog/" onClick={(event) => selectTag(event, "")}>
-              see all posts
-            </a>
-            .
+            Try another topic, or <a href="/blog/">see all posts</a>.
           </p>
         </section>
       )}
@@ -88,13 +75,13 @@ export function BlogArchive({ posts }: { posts: BlogPreview[] }) {
           <span className="blog-topics-label">
             <LuTag aria-hidden="true" /> Topics
           </span>
-          <a href="/blog/" aria-current={!selected ? "true" : undefined} onClick={(event) => selectTag(event, "")}>
+          <a href="/blog/" aria-current={!selected ? "true" : undefined}>
             All posts <span>{posts.length}</span>
           </a>
           {[...tags]
             .sort((a, b) => a[1].label.localeCompare(b[1].label))
             .map(([key, tag]) => (
-              <a key={key} href={blogTagHref(key)} aria-current={selected === key ? "true" : undefined} onClick={(event) => selectTag(event, key)}>
+              <a key={key} href={blogTagHref(key)} aria-current={selected === key ? "true" : undefined}>
                 {tag.label} <span>{tag.count}</span>
               </a>
             ))}

@@ -301,6 +301,47 @@ async function checkLandscapeNavigation(browser, baseUrl) {
   }
 }
 
+async function checkNavigationWithoutJavaScript(browser, baseUrl) {
+  const context = await browser.newContext({ javaScriptEnabled: false, colorScheme: options.theme, viewport: viewports[1] });
+  try {
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/`, { waitUntil: "load" });
+    const menu = page.getByRole("navigation", { name: "Mobile navigation" });
+    const summary = page.locator(".mobile-menu summary");
+    assert.equal(await menu.isVisible(), false);
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await menu.waitFor({ state: "visible" });
+    assert.match(await summary.ariaSnapshot(), /button .*\[expanded\]/, "Assistive technology must announce the opened menu without JavaScript.");
+    await menu.getByRole("link", { name: "contact", exact: true }).click();
+    await page.waitForURL(`${baseUrl}/contact/`);
+    await page.getByRole("heading", { name: /^Contact/, level: 1 }).waitFor();
+  } finally {
+    await context.close();
+  }
+}
+
+async function checkHomeWriting(page, baseUrl) {
+  if (new URL(page.url()).pathname !== "/") return;
+  const links = page.locator(".home-writing-entry h3 a");
+  if (includesRoute("/notes/qa-grouped/")) {
+    assert.equal(
+      await links.filter({ hasText: "Grouped compiler note" }).getAttribute("href"),
+      "/notes/qa-grouped/",
+      "The published route-group fixture must appear on the homepage with a reachable Notes URL."
+    );
+  }
+  const entries = await links.evaluateAll((items) => items.map((link) => ({ href: link.getAttribute("href"), title: link.textContent.trim() })));
+  for (const entry of entries) {
+    await page.locator(".home-writing-entry h3").getByRole("link", { name: entry.title, exact: true }).click();
+    await page.waitForURL(new URL(entry.href, baseUrl).href);
+    await page.getByRole("heading", { name: entry.title, exact: true, level: 1 }).waitFor();
+    await page.goBack();
+    await page.waitForURL(`${baseUrl}/`);
+    await page.locator(".home-writing-entry h3").getByRole("link", { name: entry.title, exact: true }).waitFor();
+  }
+}
+
 async function checkNotesEmptyState(page) {
   const content = page.locator("#notes-content");
   if (!(await content.count()) || (await content.getAttribute("data-empty-collection")) !== "true") return;
@@ -364,13 +405,52 @@ async function checkBlogFilters(page, baseUrl) {
   await topic.focus();
   await page.keyboard.press("Enter");
   await page.waitForFunction((tag) => new URLSearchParams(location.search).get("tag") === tag, key);
+  await page.waitForFunction(
+    ({ tag, count }) => {
+      const selected = document.querySelector('.blog-filters a[aria-current="true"]');
+      return (
+        selected &&
+        new URL(selected.getAttribute("href"), location.href).searchParams.get("tag") === tag &&
+        document.querySelectorAll(".blog-post-preview").length === count
+      );
+    },
+    { tag: key, count: expected }
+  );
   assert.equal(await topic.getAttribute("aria-current"), "true");
   assert.equal(await page.locator(".blog-post-preview").count(), expected);
+  // Do not reload first: a reload used to conceal the broken topic -> article -> Back journey.
+  const archiveTitle = await page.locator("h1").innerText();
+  const article = page.locator(".blog-post-preview h2 a").first();
+  const articleHref = await article.getAttribute("href");
+  const articleTitle = await article.innerText();
+  await article.click();
+  await page.waitForURL(new URL(articleHref, baseUrl).href);
+  await page.getByRole("heading", { name: articleTitle, exact: true, level: 1 }).waitFor();
+  await page.goBack();
+  await page.getByRole("heading", { name: archiveTitle, exact: true, level: 1 }).waitFor();
+  await page.waitForFunction(
+    ({ tag, count }) => {
+      const selected = document.querySelector('.blog-filters a[aria-current="true"]');
+      return (
+        new URLSearchParams(location.search).get("tag") === tag &&
+        document.querySelectorAll(".blog-post-preview").length === count &&
+        selected &&
+        new URL(selected.getAttribute("href"), location.href).searchParams.get("tag") === tag
+      );
+    },
+    { tag: key, count: expected }
+  );
+  await page.goForward();
+  await page.waitForURL(new URL(articleHref, baseUrl).href);
+  await page.getByRole("heading", { name: articleTitle, exact: true, level: 1 }).waitFor();
+  await page.goBack();
+  await page.getByRole("heading", { name: archiveTitle, exact: true, level: 1 }).waitFor();
   await page.reload({ waitUntil: "load" });
   await page.waitForFunction(() => !document.querySelector('astro-island[client="load"][ssr]'));
   await page.waitForFunction(() => document.querySelector('.blog-filters a[aria-current="true"]')?.getAttribute("href")?.includes("?tag="));
   await filters.getByRole("link", { name: /^All posts/ }).click();
   await page.waitForFunction(() => !location.search);
+  await page.waitForFunction((count) => document.querySelectorAll(".blog-post-preview").length === count, total);
   assert.equal(await page.locator(".blog-post-preview").count(), total);
   await page.goBack();
   await page.waitForFunction((tag) => new URLSearchParams(location.search).get("tag") === tag, key);
@@ -380,6 +460,7 @@ async function checkBlogFilters(page, baseUrl) {
   assert.equal(await page.locator(".blog-post-preview").count(), 0);
   await page.getByRole("link", { name: "see all posts", exact: true }).click();
   await page.waitForFunction(() => !location.search);
+  await page.waitForFunction((count) => document.querySelectorAll(".blog-post-preview").length === count, total);
   assert.equal(await page.locator(".blog-post-preview").count(), total);
 }
 
@@ -1243,6 +1324,7 @@ try {
           await checkBlogFilters(page, baseUrl);
           await checkBlogReading(page, viewport);
           await checkNotesAuthoring(page);
+          await checkHomeWriting(page, baseUrl);
           for (const image of await page.locator(".gallery-trigger img").all()) {
             await image.scrollIntoViewIfNeeded();
             await image.evaluate((element) => element.decode());
@@ -1303,7 +1385,10 @@ try {
   for (const route of ["/", "/contact/"]) {
     if (includesRoute(route)) await checkNewsletterWithoutProvider(browser, baseUrl, route);
   }
-  if (includesRoute("/")) await checkLandscapeNavigation(browser, baseUrl);
+  if (includesRoute("/")) {
+    await checkLandscapeNavigation(browser, baseUrl);
+    await checkNavigationWithoutJavaScript(browser, baseUrl);
+  }
   if (includesRoute("/volunteering/hacktoberfest-lahore-2025/")) await checkLightboxKeyboard(browser, baseUrl);
 
   console.log(
