@@ -39,7 +39,7 @@ jobs:
           "$RUNNER_TEMP/gitleaks" git . --log-opts="HEAD --remotes=origin" --config "$RUNNER_TEMP/gitleaks.toml" --gitleaks-ignore-path "$RUNNER_TEMP/gitleaks-no-ignore" --ignore-gitleaks-allow --redact=100 --no-banner --no-color
 
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -104,7 +104,7 @@ jobs:
       url: https://www.mmahad.com
     steps:
       - name: Set up deployment Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "22"
           package-manager-cache: false
