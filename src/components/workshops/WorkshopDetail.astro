@@ -9,6 +9,7 @@ interface Props {
 }
 
 const { data } = Astro.props;
+const slidesLink = data.links.find((link) => link.label === "Slides");
 const rawDate = data.date instanceof Date ? data.date : new Date(`${data.date}T00:00:00Z`);
 const formattedDate = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -17,7 +18,10 @@ const formattedDate = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
 }).format(rawDate);
 
-const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) calc(100vw - 2.5rem), 58rem";
+const heroSizes =
+  data.hero.layout === "poster"
+    ? "(max-width: 34rem) calc(100vw - 1.5rem), 32rem"
+    : "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) calc(100vw - 2.5rem), 58rem";
 ---
 
 <article class="workshop-shell">
@@ -34,20 +38,41 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
         </p>
       )
     }
+    {
+      slidesLink && (
+        <p class="slides-link">
+          <a href={slidesLink.url} target="_blank" rel="noopener noreferrer">
+            View presentation slides <span aria-hidden="true">↗</span>
+          </a>
+        </p>
+      )
+    }
   </header>
 
-  <figure class="hero-photo">
-    <ResponsiveImage
-      src={data.hero.src}
-      sizes={heroSizes}
-      alt={data.hero.alt}
-      title={data.hero.title}
-      loading="eager"
-      decoding="async"
-      fetchpriority="high"
-    />
-    {data.hero.caption && <figcaption>{data.hero.caption}</figcaption>}
-  </figure>
+  {
+    data.slidesEmbedUrl && (
+      <div class="slides-embed">
+        <iframe src={data.slidesEmbedUrl} title={`${data.title} presentation slides`} width="960" height="569" loading="lazy" allowfullscreen />
+      </div>
+    )
+  }
+
+  {
+    data.hero.layout !== "poster" && (
+      <figure class="hero-photo">
+        <ResponsiveImage
+          src={data.hero.src}
+          sizes={heroSizes}
+          alt={data.hero.alt}
+          title={data.hero.title}
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
+        {data.hero.caption && <figcaption>{data.hero.caption}</figcaption>}
+      </figure>
+    )
+  }
 
   <div class="workshop-content">
     {
@@ -127,7 +152,7 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
       )
     }
 
-    <WorkshopGallery groups={data.galleryGroups} />
+    {data.galleryGroups.length > 0 && <WorkshopGallery groups={data.galleryGroups} />}
 
     {
       data.additionalInfo && (
@@ -135,6 +160,15 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
           <h2 id="additional-information">Additional Information</h2>
           <p>{data.additionalInfo}</p>
         </section>
+      )
+    }
+
+    {
+      data.hero.layout === "poster" && (
+        <figure class="hero-photo hero-photo--poster">
+          <ResponsiveImage src={data.hero.src} sizes={heroSizes} alt={data.hero.alt} title={data.hero.title} loading="lazy" decoding="async" />
+          {data.hero.caption && <figcaption>{data.hero.caption}</figcaption>}
+        </figure>
       )
     }
   </div>
@@ -164,6 +198,7 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
   }
 
   .back-link:focus-visible,
+  .slides-link a:focus-visible,
   .resource-links a:focus-visible {
     outline: 3px solid var(--focus, #e07a3f);
     outline-offset: 3px;
@@ -201,6 +236,45 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
     line-height: 1.55;
   }
 
+  .slides-link {
+    margin: 1.25rem 0 0;
+  }
+
+  .slides-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 2.75rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--accent);
+    border-radius: 0.3rem;
+    background: var(--accent-wash);
+    color: var(--accent-strong);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .slides-link a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .slides-embed {
+    margin-top: 2rem;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .slides-embed iframe {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 960 / 569;
+    border: 0;
+  }
+
   dt {
     color: var(--muted, #59706b);
     font-size: 0.75rem;
@@ -228,6 +302,11 @@ const heroSizes = "(max-width: 34rem) calc(100vw - 1.5rem), (max-width: 59rem) c
     height: auto;
     border: 1px solid var(--line);
     border-radius: var(--radius);
+  }
+
+  .hero-photo--poster {
+    max-width: 32rem;
+    margin-inline: auto;
   }
 
   .hero-photo figcaption {

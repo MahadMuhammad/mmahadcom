@@ -24,12 +24,23 @@ async function collectHtmlFiles(directory) {
 }
 
 const inlineScriptHashes = new Set();
+const frameSources = new Set();
 const htmlFiles = await collectHtmlFiles(outputDirectory);
 
 for (const htmlFile of htmlFiles) {
   const html = await readFile(htmlFile, "utf8");
 
   assertNoInlineEventHandlers(html, path.relative(projectRoot, htmlFile));
+
+  for (const match of html.matchAll(/<iframe\b[^>]*\bsrc=["']([^"']+)["']/gi)) {
+    const frameUrl = new URL(match[1]);
+
+    if (frameUrl.origin !== "https://docs.google.com" || !/^\/presentation\/d\/e\/[A-Za-z0-9_-]+\/pubembed$/.test(frameUrl.pathname)) {
+      throw new Error(`Unsupported iframe source in ${path.relative(projectRoot, htmlFile)}; only published Google Slides embeds are allowed.`);
+    }
+
+    frameSources.add(`${frameUrl.origin}${frameUrl.pathname}`);
+  }
 
   for (const match of html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)) {
     const [, attributes, body] = match;
@@ -47,7 +58,7 @@ const contentSecurityPolicy = [
   "base-uri 'none'",
   "object-src 'none'",
   "frame-ancestors 'none'",
-  "frame-src 'none'",
+  `frame-src ${frameSources.size > 0 ? [...frameSources].toSorted().join(" ") : "'none'"}`,
   "form-action 'self' https://mmahad.substack.com",
   "img-src 'self' data:",
   "font-src 'self' data:",
