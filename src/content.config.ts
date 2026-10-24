@@ -86,6 +86,7 @@ const workshops = defineCollection({
     topic: z.string().optional(),
     talkTitle: z.string().optional(),
     talkIntro: z.string().optional(),
+    slidesEmbedUrl: z.url().optional(),
     links: z
       .array(
         z.object({
@@ -95,6 +96,7 @@ const workshops = defineCollection({
       )
       .default([]),
     hero: workshopImage.extend({
+      layout: z.enum(["photo", "poster"]).default("photo"),
       caption: z.string().optional(),
     }),
     sections: z

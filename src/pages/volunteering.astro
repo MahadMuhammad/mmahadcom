@@ -22,7 +22,7 @@ const workshopCards = [
     .toSorted((left, right) => right.data.date.valueOf() - left.data.date.valueOf())
     .map(({ data }) => ({
       title: data.title,
-      meta: `${eventDateFormatter.format(data.date)} | ${data.location}`,
+      meta: [eventDateFormatter.format(data.date), data.format === "Online" ? data.time : undefined, data.location].filter(Boolean).join(" | "),
       description: data.description,
       detail: data.talkTitle ? `Topic: “${data.talkTitle}”` : data.topic ? `Topic: “${data.topic}”` : undefined,
       links: [
@@ -33,7 +33,7 @@ const workshopCards = [
         },
         ...data.links.map((link) => ({ label: link.label, href: link.url })),
       ],
-      hero: data.hero,
+      hero: data.hero.layout === "poster" ? undefined : data.hero,
     })),
   ...legacyWorkshops.map((workshop) => ({ ...workshop, hero: undefined })),
 ];
