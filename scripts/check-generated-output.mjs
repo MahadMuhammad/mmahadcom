@@ -274,12 +274,17 @@ for (const [relativePath, expected] of [
   ],
   ["volunteering/hacktoberfest-lahore-2025/index.html", "https://www.mmahad.com/workshops/hacktoberfest-lahore-2025/whole-group-picture.jpg"],
   ["volunteering/gsoc-lgu-2025/index.html", "https://www.mmahad.com/workshops/gsoc-lgu-2025/full-group-picture.jpg"],
+  [
+    "volunteering/gsoc-unlocked-comsats-lahore-2026/index.html",
+    "https://www.mmahad.com/workshops/gsoc-unlocked-comsats-lahore-2026/announcement.jpg",
+  ],
 ]) {
   await assertOpenGraphMetadata(relativePath, expected);
 }
 
 // The email field must ship in HTML, without depending on a provider frame or scripts.
 const signupPages = new Set(["index.html", "contact/index.html"]);
+const expectedFrameSources = new Set();
 for (const file of (await listFiles(outputDirectory)).filter((file) => file.endsWith(".html"))) {
   const relativePath = path.relative(outputDirectory, file);
   const html = await readFile(file, "utf8");
@@ -290,6 +295,13 @@ for (const file of (await listFiles(outputDirectory)).filter((file) => file.ends
     for (const child of node.childNodes ?? []) collectElements(child);
   }
   collectElements(document);
+  for (const frame of elements.filter((element) => element.tag === "iframe")) {
+    const frameUrl = new URL(frame.src);
+    assert.equal(frameUrl.origin, "https://docs.google.com", `${relativePath}: unexpected embedded content provider.`);
+    assert.match(frameUrl.pathname, /^\/presentation\/d\/e\/[A-Za-z0-9_-]+\/pubembed$/, `${relativePath}: use a published Google Slides player.`);
+    assert.ok(frame.title, `${relativePath}: embedded slides need an accessible title.`);
+    expectedFrameSources.add(`${frameUrl.origin}${frameUrl.pathname}`);
+  }
   const forms = elements.filter((element) => element.tag === "form" && element.action?.includes("substack.com"));
   assert.equal(forms.length, signupPages.has(relativePath) ? 1 : 0, `${relativePath}: unexpected newsletter placement.`);
   assert.ok(
@@ -315,7 +327,8 @@ for (const file of (await listFiles(outputDirectory)).filter((file) => file.ends
   }
 }
 const generatedHeaders = await readFile(path.join(outputDirectory, "_headers"), "utf8");
-assert.ok(generatedHeaders.includes("frame-src 'none';"), "No external signup frame is needed.");
+const expectedFramePolicy = `frame-src ${expectedFrameSources.size > 0 ? [...expectedFrameSources].toSorted().join(" ") : "'none'"};`;
+assert.ok(generatedHeaders.includes(expectedFramePolicy), "Only the published presentations used by the site may be embedded.");
 assert.ok(generatedHeaders.includes("form-action 'self' https://mmahad.substack.com;"), "Only the selected publication may receive the signup form.");
 assert.ok(generatedHeaders.includes("connect-src 'self';"), "Signup must not require client-side API access.");
 
