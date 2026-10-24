@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { expires } from "./audit-dependencies.mjs";
+import { assertHardenedCache } from "./harden-cache.mjs";
 
-export async function assertStaticOutput(root, now = Date.now()) {
-  assert.ok(Number.isFinite(now) && now < expires, "Temporary dependency exception expired; do not publish these assets.");
+export async function assertStaticOutput(root) {
+  await assertHardenedCache(fileURLToPath(new URL("../", import.meta.url)));
   const forbidden = ["_worker.js", "functions", "wrangler.toml", "wrangler.json", "wrangler.jsonc", "package.json", "node_modules"];
   const top = await readdir(root);
   for (const entry of forbidden) assert.ok(!top.includes(entry), `Executable or server configuration in static output: ${entry}`);
