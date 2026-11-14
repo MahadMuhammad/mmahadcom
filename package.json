@@ -37,7 +37,7 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/vite": "^4.3.3",
-    "astro": "^7.4.1",
+    "astro": "^7.4.12",
     "fumadocs-core": "^16.15.8",
     "fumadocs-ui": "^16.15.8",
     "react": "^19.2.8",
